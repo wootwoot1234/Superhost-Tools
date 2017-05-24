@@ -1,0 +1,42 @@
+<div class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form role="form" name="addAccountForm" ng-submit="submitAddAccountForm(addAccountForm.$valid)" novalidate>
+                <div class="modal-header">
+                    <button type="button" class="close" aria-label="Close" ng-click="hideAddAccount()"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Link Airbnb Account</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Using your Airbnb credentials our messaging engine logs in on your behalf and automatically sends messages to your guests.  Don't worry, it will only send messages you tell it to send.</p>
+                    <div class="alert alert-danger help-block" ng-show="addAccountError">
+                        {{addAccountError}}
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="form-group" ng-class="addAccountForm.$submitted && addAccountForm.airbnbUsername.$invalid && !addAccountForm.airbnbUsername.$pristine ? 'has-error' : ''">
+                                <label>Airbnb E-Mail <i class="fa fa-question-circle text-muted" bs-tooltip data-title="Enter the email address you use to login to your Airbnb Account."></i></label>
+                                <input class="form-control" placeholder="Airbnb E-mail" name="airbnbUsername" type="email" ng-model="addAccountData.airbnbUsername" autofocus>
+                                <div class="alert alert-danger help-block" ng-show="addAccountForm.$submitted && addAccountForm.airbnbUsername.$invalid && !addAccountForm.airbnbUsername.$pristine">
+                                    Enter a valid email.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <div class="form-group" ng-class="addAccountForm.$submitted && addAccountForm.airbnbPassword.$error.minlength ? 'has-error' : ''">
+                                <label>Airbnb Password <i class="fa fa-question-circle text-muted" bs-tooltip data-title="Enter your Airbnb password."></i></label>
+                                <input class="form-control" placeholder="Airbnb Password" name="airbnbPassword" type="password" ng-model="addAccountData.airbnbPassword" ng-minlength="8">
+                                <div class="alert alert-danger help-block" ng-show="addAccountForm.$submitted && addAccountForm.airbnbPassword.$error.minlength">
+                                    Password is too short.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default btn-outline" ng-click="hideAddAccount()">Cancel</button>
+                    <button class="btn btn-primary btn-outline" type="submit"><i class="fa fa-circle-o-notch fa-fw fa-spin" ng-show="addAccountProcessing"></i><i class="fa fa-user-plus fa-fw" ng-hide="addAccountProcessing"></i> Add Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

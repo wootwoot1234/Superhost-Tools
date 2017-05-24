@@ -1,0 +1,109 @@
+<div class="row" ng-hide="accounts.length == 0">
+    <div class="col-md-12 col-lg-offset-2 col-lg-8">
+        <h1 class="page-header">Dashboard</h1>
+    </div>
+</div>
+<div class="row" ng-hide="accounts.length == 0">
+    <div class="col-md-12 col-lg-offset-2 col-lg-8">
+        <ol class="breadcrumb">
+            <li class="active">Dashboard</li>
+            <li></li>
+        </ol>
+    </div>
+</div>
+<div class="row" ng-show="error">
+    <div class="col-md-6 col-md-offset-3">
+        <div class="alert alert-danger" role="alert">
+            <h1>Error</h1>
+            <p>
+                We got the following error: {{error.error_message}}
+            </p>
+        </div>
+    </div>
+</div>
+<div class="row" ng-show="badAccounts.length != 0">
+    <div class="col-md-6 col-md-offset-3">
+        <div class="alert alert-danger" role="alert">
+            <h1>Oh snap!</h1>
+            <p>
+                We had some trouble logging into your Airbnb account using the login information you gave us.  We can't sent messages to your guests unless we have the correct login info.
+            </p>
+            <table class="table">
+                <tbody>
+                    <tr ng-repeat="badAccount in badAccounts">
+                        <td>{{badAccount.airbnbUsername}}</td>
+                        <td>
+                            <div class="btn-group pull-right">
+                                <a class="btn btn-xs btn-success btn-outline" ng-click="showAddAccount(badAccount.airbnbUsername)"><i class="fa fa-user-plus fa-fw"></i> Update</a>
+                                <a class="btn btn-xs btn-danger btn-outline" ng-click="showConfirm(badAccount.airbnbUsername)"><i class="fa fa-times fa-fw"></i> Delete</a>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="row" ng-show="accounts.length == 0 && badAccounts.length == 0">
+    <div class="col-md-6 col-md-offset-3">
+        <div class="jumbotron page-header">
+            <h1>Hello!</h1>
+            <p>
+                Welcome to Super Host Tools, to get started let's link your Airbnb account.
+            </p>
+            <p>
+                <a class="btn btn-lg btn-success btn-outline" ng-click="showAddAccount()"><i class="fa fa-user-plus fa-fw"></i> Add Account</a>
+            </p>
+        </div>
+    </div>
+</div>
+<div class="row" ng-show="messageRules.length == 0 && accounts.length != 0">
+    <div class="col-md-6 col-md-offset-3">
+        <div class="jumbotron page-header">
+            <h1>Right on!</h1>
+            <p>
+                Your Airbnb account has been successfully linked.  Now let's add a message rule.
+            </p>
+            <p>
+                See the "Listings" button in the menu at the top of the page?  Select your listing from there and add some rules!
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="row" ng-hide="messageRules.length === 0 || messages.length === 0">
+    <div class="col-md-12 col-lg-offset-2 col-lg-8 text-center" ng-hide="showPastMessages">
+        <button class="btn btn-default btn-outline" ng-click="showPastMessages = true"><i class="fa fa-clock-o fa-fw"></i> Show Previous</button>
+    </div>
+    <div class="col-md-12 col-lg-offset-2 col-lg-8">
+        <ul class="timeline">
+            <li ng-repeat="message in messages" ng-class-even="'timeline-inverted'" ng-hide="(message.sentDate || message.sendDateHasPassed) && !showPastMessages">
+                <img ng-src="{{message.reservation.airbnbThumbnailUrl}}" alt="User Avatar" class="timeline-badge" />
+                <div class="timeline-panel" ng-class="{'sent' : message.sentDate || message.disable, 'didntSend' : !message.sentDate && message.sendDateHasPassed}">
+                    <div class="timeline-heading">
+                        <h4 class="timeline-title">{{message.reservation.airbnbFirstName}}</h4>
+                        <small class="text-muted"><i class="fa fa-home"></i> {{message.listingName}}</small>
+                        <br/>
+                        <small class="text-muted"><i class="fa fa-tag"></i> {{message.messageRuleTitle}}</small>
+                        <br/>
+                        <small class="text-muted"><i class="fa fa-clock-o"></i> {{message.sentDateFormated ? message.sentDateFormated : message.sendDateFormated}} at {{message.sentTimeFormated ? message.sentTimeFormated : message.sendTimeFormated}}</small>
+                    </div>
+                    <div class="timeline-body">
+                        <pre ng-class="message.sentDate || message.sendDateHasPassed || message.disable ? 'text-muted' : ''">{{message.message ? message.message : message.sendMessage}}</pre>
+                        <h5 ng-show="message.reviewEnabled">5 Star Review:</h4>
+                        <pre ng-show="message.reviewEnabled" ng-class="message.sentDate || message.sendDateHasPassed || message.disable ? 'text-muted' : ''">{{message.review ? message.review : message.sendReview}}</pre>
+                        <div class="btn-group btn-group-xs pull-right" role="group">
+                            <button type="button" class="btn btn-danger btn-outline" ng-hide="message.sentDate || message.sendDateHasPassed || message.disable" ng-click="disableMessage(message)"><i class="fa fa-ban fa-fw"></i> Don't Send</button>
+                            <button type="button" class="btn btn-danger" ng-disabled="message.sendDateHasPassed" ng-show="message.disable" ng-click="disableMessage(message)"><i class="fa fa-ban fa-fw"></i> Disabled</button>
+                            <button type="button" class="btn btn-success btn-outline" ng-disabled="true" ng-show="message.sentDate"><i class="fa fa-check fa-fw"></i> Sent</button>
+                            <button type="button" class="btn btn-default btn-outline" ng-disabled="true" ng-show="!message.sentDate && message.sendDateHasPassed"><i class="fa fa-times fa-fw"></i> Didn't Send</button>
+                            <a type="button" class="btn btn-primary btn-outline" href="/admin/#/messageRules/{{message.reservation.airbnbListingID}}" ng-show="message.hasMatchingMessageRule"><i class="fa fa-pencil fa-fw"></i> Edit Rule</a>
+                            <a type="button" class="btn btn-primary btn-outline" ng-hide="message.hasMatchingMessageRule" ng-disabled="true" bs-tooltip data-title="Rule no longer exists."><i class="fa fa-pencil fa-fw"></i> Edit Rule</a>
+                            <a type="button" class="btn btn-default btn-outline" target="_blank" href="https://www.airbnb.com/messaging/qt_for_reservation/{{message.reservation.airbnbConfirmationCode}}"><i class="fa fa-external-link fa-fw"></i> View</a>
+                        </div>
+                    </div>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>

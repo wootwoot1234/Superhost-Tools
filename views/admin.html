@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="adminApp">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Super Host Tools</title>
+
+    <!-- jQuery -->
+    <script src="../admin/sb-admin-2/vendor/jquery/jquery.min.js"></script>
+
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-animate.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-route.min.js"></script>
+    <script src="../bower_components/angular-strap/dist/angular-strap.min.js"></script>
+    <script src="../bower_components/angular-strap/dist/angular-strap.tpl.min.js"></script>
+    <script src="../bower_components/angular-bootstrap-calendar/dist/js/angular-bootstrap-calendar-tpls.min.js"></script>
+    <script src="../bower_components/moment/moment.js"></script>
+    <script src="../bower_components/angular-moment/angular-moment.js"></script>
+
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+    <script src="/admin/js/admin.js"></script>
+
+    <!-- Bootstrap Core CSS --><!-- Latest compiled and minified CSS -->
+<!--     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css">
+
+
+    <!-- MetisMenu CSS -->
+    <link href="../bower_components/metisMenu/dist/metisMenu.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="../admin/sb-admin-2/css/sb-admin-2.css" rel="stylesheet">
+    <link href='https://fonts.googleapis.com/css?family=Kaushan+Script' rel='stylesheet' type='text/css'>
+
+    <!-- Morris Charts CSS -->
+<!--     <link href="../admin/sb-admin-2/vendor/morrisjs/morris.css" rel="stylesheet"> -->
+
+    <!-- Custom Fonts -->
+    <link href="../admin/sb-admin-2/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+    <link href="../bower_components/angular-bootstrap-calendar/dist/css/angular-bootstrap-calendar.min.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+
+    <link href="../admin/css/styles.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <div id="wrapper" ng-controller="MainController">
+        <nav class="navbar navbar-inverse navbar-fixed-top">
+            <div class="container-fluid" bs-collapse start-collapsed="true">
+                <!-- Brand and toggle get grouped for better mobile display -->
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed"  bs-collapse-toggle data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false">
+                        <span class="sr-only">Toggle navigation</span> Menu <i class="fa fa-bars"></i>
+                    </button>
+                    <a class="navbar-brand" href="#/">Super Host Tools</a>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-collapse" bs-collapse-target>
+                    <ul class="nav navbar-nav">
+                        <li><a href="/admin/#/"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a></li>
+                        <li class="dropdown" ng-hide="listings.length <= 1">
+                            <a href="#" class="dropdown-toggle" bs-dropdown data-placement="bottom-right" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-envelope-o  fa-fw"></i> Messages <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li ng-repeat="listing in listings">
+                                    <a href="/admin/#/messageRules/{{listing.airbnbListingID}}">{{listing.nickname ? listing.nickname : listing.airbnbName}}</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li ng-show="listings.length == 1"><a href="/admin/#/messageRules/{{listings[0].airbnbListingID}"><i class="fa fa-envelope-o fa-fw"></i> Messages</a></li>
+                        <li class="dropdown" ng-hide="listings.length <= 1">
+                            <a href="#" class="dropdown-toggle" bs-dropdown data-placement="bottom-right" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-calendar-o fa-fw"></i> Pricing <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li ng-repeat="listing in listings">
+                                    <a href="/admin/#/calendar/{{listing.airbnbListingID}}">{{listing.nickname ? listing.nickname : listing.airbnbName}}</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li ng-show="listings.length == 1"><a href="/admin/#/calendar/{{listings[0].airbnbListingID}"><i class="fa fa-calendar-o fa-fw"></i> Pricing</a></li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" bs-dropdown data-placement="bottom-right" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-user fa-fw"></i> <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><h6 class="dropdown-header"><%- user.username %></h6>
+                                </li>
+                                <li><a ng-click="showAddAccount()"><i class="fa fa-user-plus fa-fw"></i> Add Account</a></li>
+                                <li role="separator" class="divider"></li>
+                                <li><a href="/logout"><i class="fa fa-sign-out fa-fw"></i> Logout</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <!-- Dynamically render templates -->
+        <div id="page-wrapper" ng-view autoscroll="true">
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    <!-- Bootstrap Core JavaScript -->
+    <!-- <script src="../admin/sb-admin-2/vendor/bootstrap/js/bootstrap.min.js"></script> -->
+
+    <!-- Metis Menu Plugin JavaScript -->
+    <script src="../bower_components/metisMenu/dist/metisMenu.js"></script>
+
+    <!-- Flot Charts JavaScript -->
+<!--     <script src="../admin/sb-admin-2/vendor/flot/excanvas.min.js"></script>
+    <script src="../admin/sb-admin-2/vendor/flot/jquery.flot.js"></script>
+    <script src="../admin/sb-admin-2/vendor/flot/jquery.flot.pie.js"></script>
+    <script src="../admin/sb-admin-2/vendor/flot/jquery.flot.resize.js"></script>
+    <script src="../admin/sb-admin-2/vendor/flot/jquery.flot.time.js"></script>
+    <script src="../admin/sb-admin-2/vendor/flot-tooltip/jquery.flot.tooltip.min.js"></script>
+    <script src="../admin/sb-admin-2/data/flot-data.js"></script> -->
+
+    <!-- Morris Charts JavaScript -->
+<!--     <script src="../admin/sb-admin-2/vendor/raphael/raphael.min.js"></script>
+    <script src="../admin/sb-admin-2/vendor/morrisjs/morris.min.js"></script>
+    <script src="../admin/sb-admin-2/data/morris-data.js"></script> -->
+
+    <!-- Custom Theme JavaScript -->
+    <!-- <script src="../admin/sb-admin-2/js/sb-admin-2.js"></script> -->
+
+</body>
+
+</html>

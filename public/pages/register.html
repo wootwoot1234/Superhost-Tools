@@ -1,0 +1,36 @@
+<!-- Register Section -->
+<section id="register">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 col-md-offset-4">
+                <div class="login-panel panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Please Sign Up</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form role="form" name="registerForm" ng-submit="submitRegisterForm(registerForm.$valid)" novalidate>
+                            <fieldset>
+                                <div class="alert alert-danger help-block" ng-show="registerError">
+                                    {{registerError}}
+                                </div>
+                                <div class="form-group" ng-class="registerForm.$submitted && registerForm.username.$invalid && !registerForm.username.$pristine ? 'has-error' : ''">
+                                    <input class="form-control" placeholder="E-mail" name="username" type="email" autofocus ng-model="registerData.username">
+                                    <div class="alert alert-danger help-block" ng-show="registerForm.$submitted && registerForm.username.$invalid && !registerForm.username.$pristine">
+                                        Enter a valid email.
+                                    </div>
+                                </div>
+                                <div class="form-group" ng-class="registerForm.$submitted && registerForm.password.$error.minlength ? 'has-error' : ''">
+                                    <input class="form-control" placeholder="Password" name="password" type="password" value="" ng-model="registerData.password" ng-minlength="8">
+                                    <div class="alert alert-danger help-block" ng-show="registerForm.$submitted && registerForm.password.$error.minlength">
+                                        Password is too short.
+                                    </div>
+                                </div>
+                                <button class="btn btn-lg btn-success btn-block" type="submit">Sign Up</button>
+                            </fieldset>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

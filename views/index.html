@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="indexApp" ng-controller="indexController">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Open Source Airbnb Auto Messaging and Pricing Tool for Hosts">
+    <meta name="author" content="Tom Krones">
+
+    <title>Superhost Tools</title>
+
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.6.2/angular.min.js"></script>
+<!--     <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular-animate.js"></script> -->
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular-route.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/angular-strap/2.3.12/angular-strap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/angular-strap/2.3.12/angular-strap.tpl.min.js"></script>
+
+    <script src="/js/index.js"></script>
+
+</head>
+
+<body id="page-top" class="index">
+
+    <!-- Navigation -->
+    <nav id="mainNav" class="navbar navbar-default navbar-custom navbar-fixed-top" bs-affix data-offset-top="0" >
+        <div class="container" bs-collapse start-collapsed="true">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header page-scroll">
+                <button type="button" class="navbar-toggle" bs-collapse-toggle data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span> Menu <i class="fa fa-bars"></i>
+                </button>
+                <a class="navbar-brand page-scroll" href="#page-top">Super Host Tools</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="navbar-collapse" bs-collapse-target>
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="hidden">
+                        <a href="#page-top"></a>
+                    </li>
+                    <li bs-scrollspy data-target="#login" data-offset="51">
+                        <a class="page-scroll" href="#!/login">Login</a>
+                    </li>
+                    <li bs-scrollspy data-target="#register" data-offset="51">
+                        <a class="page-scroll" href="#!/register">Sign Up</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <!-- Dynamically render templates -->
+    <div id="page-wrapper" ng-view>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <span class="copyright">Copyright &copy; SuperHostTools.com 2017</span>
+                </div>
+                <div class="col-md-4">
+<!--                     <ul class="list-inline social-buttons">
+                        <li><a href="#"><i class="fa fa-twitter"></i></a>
+                        </li>
+                        <li><a href="#"><i class="fa fa-facebook"></i></a>
+                        </li>
+                        <li><a href="#"><i class="fa fa-linkedin"></i></a>
+                        </li>
+                    </ul> -->
+                </div>
+                <div class="col-md-4">
+                    <ul class="list-inline quicklinks">
+                        <li><a href="#">Privacy Policy</a>
+                        </li>
+                        <li><a href="#">Terms of Use</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

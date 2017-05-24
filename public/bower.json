@@ -1,0 +1,35 @@
+{
+  "name": "superhost-tools",
+  "homepage": "https://github.com/wootwoot1234/Superhost-Tools",
+  "authors": [
+    "Tom Krones <tkrones@gmail.com>"
+  ],
+  "description": "Open Source Airbnb Auto Messaging and Pricing Tool for Hosts",
+  "main": "/Users/Tom/GitHub/Superhost-Tools/views/index.html",
+  "keywords": [
+    "airbnb",
+    "auto",
+    "pricing",
+    "smart",
+    "superhost",
+    "messaging",
+    "engine"
+
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular-bootstrap-calendar": "^0.28.3",
+    "angular-moment": "^1.0.1",
+    "angular-strap": "^2.3.12",
+    "metisMenu": "metismenu#^2.6.2",
+    "gentelella": "^1.4.0"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "SuperhostTools",
+  "version": "0.1.0",
+  "description": "Open Source Airbnb Auto Messaging and Pricing Tool for Hosts",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:mjhea0/node-bootstrap3-template.git"
+  },
+  "keywords": [
+    "airbnb",
+    "smart",
+    "pricing",
+    "messaging",
+    "auto"
+  ],
+  "author": "Tom Krones <tkrones@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "bcrypt-nodejs": "0.0.3",
+    "body-parser": "^1.16.1",
+    "chai": "~1.8.1",
+    "connect-mongo": "^1.3.2",
+    "ejs": "^2.5.6",
+    "email-templates": "^2.5.4",
+    "express": "~3.3.4",
+    "mocha": "~1.14.0",
+    "moment-timezone": "^0.5.11",
+    "mongoose": "^4.8.4",
+    "nodemailer": "^3.1.4",
+    "nodemailer-mailgun-transport": "git+https://github.com/orliesaurus/nodemailer-mailgun-transport.git",
+    "passport": "~0.1.17",
+    "passport-local": "~0.1.6",
+    "passport-local-mongoose": "~0.2.5",
+    "should": "~2.1.0"
+  },
+  "engines": {
+    "node": "7.9.0"
+  }
+}

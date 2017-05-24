@@ -1,0 +1,7 @@
+{
+  "name": "Superhost Tools",
+  "description": "Open Source Airbnb Auto Messaging and Pricing Tool for Hosts",
+  "repository": "https://github.com/wootwoot1234/Superhost-Tools",
+  "logo": "https://node-js-sample.herokuapp.com/node.png",
+  "keywords": ["airbnb", "smartpricing", "messaging", "pricing"]
+}

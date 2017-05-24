@@ -1,0 +1,261 @@
+<style type="text/css">
+    mwl-calendar .cal-day-today {
+        background-color: #fff;
+    }
+    mwl-calendar .cal-day-past {
+        background-color: #ccc;
+    }
+    mwl-calendar .cal-date {
+        text-align: left;
+        padding: 10px;
+    }
+    mwl-calendar .cal-day-today .cal-date,
+    mwl-calendar .cal-day-today .cal-bottom-right {
+        font-weight: bold;
+    }
+    mwl-calendar .cal-price {
+        text-align: center;
+        font-size: 3rem;
+        font-weight: 600;
+        line-height: 0.9;
+        position: absolute;
+        top: 50%;
+        height: 30px;
+        margin-top: -15px;
+        left: 0;
+        right: 0;
+    }
+    mwl-calendar .cal-price.busy {
+        color: #dce0e0;
+    }
+    mwl-calendar .cal-day-past .cal-price {
+        color: #a0a0a0;
+    }
+    mwl-calendar .cal-day-past .cal-price.busy {
+        color: #EEEEEE;
+    }
+    mwl-calendar .cal-day-busy {
+        background-color: #eee;
+    }
+    mwl-calendar .cal-bottom-right {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        padding: 10px;
+    }
+/*    mwl-calendar .reservation-bar {
+        background-color: #00a699;
+        color: #fff;
+    }
+    mwl-calendar .tile-bar {
+        position: absolute;
+        top: 50%;
+        height: 22px;
+        margin-top: -11px;
+        left: 0;
+        right: 0;
+    }
+    mwl-calendar .tile-bar-first {
+        -webkit-border-top-left-radius: 11px;
+        -moz-border-radius-topleft: 11px;
+        border-top-left-radius: 11px;
+        -webkit-border-bottom-left-radius: 11px;
+        -moz-border-radius-bottomleft: 11px;
+        border-bottom-left-radius: 11px;
+    }
+    mwl-calendar .tile-bar-last {
+        -webkit-border-top-right-radius: 11px;
+        -moz-border-radius-topright: 11px;
+        border-top-right-radius: 11px;
+        -webkit-border-bottom-right-radius: 11px;
+        -moz-border-radius-bottomright: 11px;
+        border-bottom-right-radius: 11px;
+    }*/
+}
+</style>
+
+<script id="customMonthCell.html" type="text/ng-template">
+    <div class="cal-month-day text-center"
+        ng-class="{
+            'cal-day-outmonth': !day.inMonth,
+            'cal-day-inmonth': day.inMonth,
+            'cal-day-weekend': day.isWeekend,
+            'cal-day-past': day.isPast,
+            'cal-day-today': day.isToday,
+            'cal-day-future': day.isFuture,
+            'cal-day-selected': dateRangeSelect && dateRangeSelect.startDate <= day.date && day.date <= dateRangeSelect.endDate,
+            'cal-day-open': dayIndex === openDayIndex,
+            'cal-day-busy': !day.events[0].airbnbAvailable,}"
+        ng-mouseenter="options=true"
+        ng-mouseleave="options=false">
+        <div class="cal-date"
+            data-cal-date
+            ng-click="calendarCtrl.dateClicked(day.date)"
+            ng-bind="day.label + ' Today'"
+            ng-show="day.isToday">
+        </div>
+        <div class="cal-date"
+            data-cal-date
+            ng-click="calendarCtrl.dateClicked(day.date)"
+            ng-bind="day.label"
+            ng-hide="day.isToday || day.label == 1">
+        </div>
+        <div class="cal-date"
+            data-cal-date
+            ng-click="calendarCtrl.dateClicked(day.date)"
+            ng-bind="day.date.format('MMM') + ' ' + day.label"
+            ng-hide="day.isToday || day.label != 1">
+        </div><!--
+        <div class="reservation-bar tile-bar">
+        </div>
+        <div class="reservation-bar tile-bar tile-bar-first">
+        </div>
+        <div class="reservation-bar tile-bar tile-bar-last">
+        </div> -->
+        <div class="cal-day-tick" ng-show="dayIndex === vm.openDayIndex && (vm.cellAutoOpenDisabled || vm.view[vm.openDayIndex].events.length > 0) && !vm.slideBoxDisabled">
+            <i class="glyphicon glyphicon-chevron-up"></i>
+            <i class="fa fa-chevron-up"></i>
+        </div>
+        <div class="cal-price" ng-class="day.events[0].airbnbAvailable ? 'available' : 'busy'" ng-hide="!day.events[0].airbnbAvailable || day.isPast || !day.events[0].adjustedPrice">
+            ${{day.events[0].adjustedPrice}}
+        </div>
+        <div class="cal-bottom-right" ng-show="day.events[0].airbnbNativePrice && day.events[0].airbnbAvailable && !day.isPast">
+            <span ng-show="options">Current Price: </span>${{day.events[0].airbnbNativePrice}}
+        </div>
+    </div>
+</script>
+
+<script id="customSlideBox.html" type="text/ng-template">
+    <div class="cal-slide-box" uib-collapse="vm.isCollapsed" mwl-collapse-fallback="vm.isCollapsed">
+        <div class="cal-slide-content cal-event-list">
+            <div class="btn-group pull-right">
+                <button class="btn btn-xs btn-success" ng-click="vm.templateScope.addSpecificDatePricingRule(vm.events[0])">
+                    <i class="fa fa-plus fa-fw"></i> Add Rule
+                </button>
+            </div>
+            <ul class="unstyled list-unstyled" ng-repeat="event in vm.events | filter: {type: 'price'} | orderBy:'startsAt' track by event.calendarEventId">
+                <li>
+                    Airbnb Base Smart Price  <i class="fa fa-question-circle text-muted" bs-tooltip data-title="This is the price Airbnb uses to calculate your listing's nightly rate.  Airbnb uses many factors including history, demand and availability to calculate your specific base price. Airbnb simply increases this value by a given percentage when calculating your 'Smart Price' but often by not enough."></i><br/>
+                    &nbsp&nbsp&nbsp&nbsp\(\mathsf{\${{event.airbnbNativeSuggestedPriceLevels[0]}}}\)
+                </li>
+                <li>
+                    Airbnb Smart Price  <i class="fa fa-question-circle text-muted" bs-tooltip data-title="This is the price Airbnb would set your listing to if you turned on smart pricing.  This is typically too low."></i><br/>
+                    &nbsp&nbsp&nbsp&nbsp\(\mathsf{\${{event.airbnbNativeSuggestedPrice}} = \${{event.airbnbNativeSuggestedPriceLevels[0]}} + ${{event.airbnbNativeSuggestedPriceLevels[0]}} \times {{event.airbnbNativeSuggestedPricePercentage}}\%}\)
+                </li>
+                <li ng-repeat="rule in event.appliedRules">
+                    {{rule.title}}:<br/>&nbsp&nbsp&nbsp&nbsp{{rule.equation}}
+                </li>
+            </ul>
+        </div>
+    </div>
+</script>
+
+<div class="row" ng-show="error">
+    <div class="col-md-6 col-md-offset-3">
+        <div class="alert alert-danger" role="alert">
+            <h1>Error</h1>
+            <p>
+                We got the following error: {{error.error_message}}
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="row" ng-hide="listing.minPrice || listing.minPrice == 0">
+    <div class="col-md-6 col-md-offset-3">
+        <div class="alert alert-warning" role="alert">
+            <h1>Minimum Price Not Set</h1>
+            <p>
+                There is no minimum price set for this listing.  You can set the minimum price in the listing settings. {{listing.minPrice}}
+            </p>
+            <p class="text-center">
+                <button type="button" class="btn btn-outline btn-default" ng-click="showListingSettings(listing)"><i class="fa fa-gear"></i> Open Listing Settings</button>
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12 col-lg-12">
+        <h1 class="page-header">
+            Calendar
+            <div class="btn-group pull-right">
+                <button type="button" class="btn btn-outline btn-success" ng-click="showEditPricingRulesModal()"><i class="fa fa-plus fa-fw"></i> Add Rule</button>
+                <button type="button" class="btn btn-outline btn-primary" ng-click="forceUpdatePricing()"><i class="fa fa-rotate-left fa-fw" ng-hide="updatingPricing"></i><i class="fa fa-circle-o-notch fa-fw fa-spin" ng-show="updatingPricing"></i> Sync Pricing</button>
+                <button type="button" class="btn btn-outline btn-primary" ng-click="togglePricing()" ng-show="listing.pricingEnabled"><i class="fa fa-pause fa-fw"></i> Enabled</button>
+                <button type="button" class="btn btn-danger" ng-click="togglePricing()" ng-hide="listing.pricingEnabled"><i class="fa fa-play fa-fw"></i> Paused</button>
+                <button type="button" class="btn btn-outline btn-default" ng-click="showListingSettings(listing)">
+                    <i class="fa fa-gear"></i>
+                </button>
+            </div>
+        </h1>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12 col-lg-12">
+        <ol class="breadcrumb">
+            <li><a href="#/">Calendar</a></li>
+            <li class="dropdown active">
+                <a class="dropdown-toggle" bs-dropdown data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{listing.nickname ? listing.nickname : listing.airbnbName}} <span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                    <li ng-repeat="listing in listings">
+                        <a href="/admin/#/calendar/{{listing.airbnbListingID}}">{{listing.nickname ? listing.nickname : listing.airbnbName}}</a>
+                    </li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="col-md-12 col-lg-8">
+        <h2>
+            {{calendarTitle}}
+            <div class="btn-group pull-right">
+                <button
+                    class="btn btn-outline btn-primary"
+                    mwl-date-modifier
+                    date="viewDate"
+                    decrement="calendarView">
+                    <i class="fa fa-angle-left fa-fw"></i>
+                </button>
+                <button
+                    class="btn btn-outline btn-default"
+                    mwl-date-modifier
+                    date="viewDate"
+                    set-to-today>
+                    Today
+                </button>
+                <button
+                    class="btn btn-outline btn-primary"
+                    mwl-date-modifier
+                    date="viewDate"
+                    increment="calendarView">
+                    <i class="fa fa-angle-right fa-fw"></i>
+                </button>
+            </div>
+        </h2>
+        <mwl-calendar
+            events="calendarEvents"
+            view="calendarView"
+            view-date="viewDate"
+            view-title="calendarTitle"
+            custom-template-urls="{calendarMonthCell: 'customMonthCell.html', calendarSlideBox: 'customSlideBox.html'}"
+            template-scope="templateData">
+        </mwl-calendar>
+    </div>
+    <div class="col-md-12 col-lg-4">
+        <h2>Rules</h2>
+        <ul class="list-group">
+            <li class="list-group-item" ng-repeat="pricingRule in pricingRules">
+                {{pricingRule.title}}
+                <div class="btn-group pull-right">
+                    <button class="btn btn-xs btn-outline btn-primary" ng-click="editPricingRule(pricingRule)">
+                        <i class="fa fa-pencil-square-o fa-fw"></i> Edit
+                    </button>
+                    <button class="btn btn-xs btn-outline btn-danger" ng-click="deletePricingRule(pricingRule)">
+                        <i class="fa fa-trash-o fa-fw"></i> Delete
+                    </button>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>

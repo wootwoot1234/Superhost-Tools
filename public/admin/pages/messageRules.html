@@ -1,0 +1,80 @@
+<!-- http://stackoverflow.com/questions/20456694/grid-of-responsive-squares -->
+
+<div class="row">
+    <div class="col-md-12 col-lg-offset-2 col-lg-8">
+        <h1 class="page-header">
+            Message Rules
+            <div class="btn-group pull-right">
+                <button type="button" class="btn btn-outline btn-success" ng-click="showEditMessageRulesModal()"><i class="fa fa-plus fa-fw"></i> Add Rule</button>
+                <button type="button" class="btn btn-outline btn-default" ng-click="showListingSettings(listing)">
+                    <i class="fa fa-gear"></i>
+                </button>
+            </div>
+        </h1>
+    </div>
+</div>
+<div class="row" ng-show="error">
+    <div class="col-md-6 col-md-offset-3">
+        <div class="alert alert-danger" role="alert">
+            <h1>Error</h1>
+            <p>
+                We got the following error: {{error.error_message}}
+            </p>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12 col-lg-offset-2 col-lg-8">
+        <ol class="breadcrumb">
+            <li><a href="#/">Dashboard</a></li>
+            <li class="dropdown active">
+                <a class="dropdown-toggle" bs-dropdown data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{listing.nickname ? listing.nickname : listing.airbnbName}} <span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                    <li ng-repeat="listing in listings">
+                        <a href="/admin/#/messageRules/{{listing.airbnbListingID}}">{{listing.nickname ? listing.nickname : listing.airbnbName}}</a>
+                    </li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="col-md-12 col-lg-offset-2 col-lg-8" ng-hide="messageRules.length == 0">
+        <ul class="timeline">
+            <li ng-repeat="rule in messageRules | orderBy:['event','days','time']" ng-class-even="'timeline-inverted'">
+                <div class="timeline-badge"><i class="fa fa-check"></i>
+                </div>
+                <div class="timeline-panel">
+                    <div class="timeline-heading">
+                        <h4 class="timeline-title">{{rule.title}}</h4>
+                        <p><small class="text-muted"><i class="fa fa-clock-o"></i> {{getOption(time, rule.time).text}} {{getOption(days, rule.days).text}} {{getOption(events, rule.event).text}}</small>
+                        </p>
+                    </div>
+                    <div class="timeline-body">
+                        <pre ng-hide="rule.reviewEnabled && !rule.sendMessageAfterLeavingReview">{{rule.message}}</pre>
+                        <h5 ng-show="rule.lastMinuteMessageEnabled">Last Minute Message:</h4>
+                        <pre ng-show="rule.lastMinuteMessageEnabled">{{rule.lastMinuteMessage}}</pre>
+                        <h5 ng-show="rule.reviewEnabled">5 Star Review:</h4>
+                        <pre ng-show="rule.reviewEnabled">{{rule.reviewMessage}}</pre>
+                        <div class="btn-group btn-group-xs pull-right" role="group">
+                            <button type="button" class="btn btn-outline btn-primary" ng-click="editMessageRule(rule)"><i class="fa fa-pencil fa-fw"></i> Edit</button>
+                            <button type="button" class="btn btn-outline btn-danger" ng-click="showConfirm(rule)"><i class="fa fa-trash fa-fw"></i> Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+
+    <div class="col-md-6 col-md-offset-3" ng-show="messageRules.length == 0">
+        <div class="jumbotron page-header">
+            <h1>Add A Rule</h1>
+            <p>
+                Message rules allow you to automate sending messages to guests.  Each rule sends a message based on a specified number of days before or after a guest checks in or checks out.  Once you've created your rules, you can see sent messages and view, edit or stop future messages from your dashboard.
+            </p>
+            <p>
+                <button class="btn btn-lg btn-success btn-outline" ng-click="showEditMessageRulesModal()"><i class="fa fa-plus fa-fw"></i> Add Rule</button>
+            </p>
+        </div>
+    </div>
+</div>
