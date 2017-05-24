@@ -30,5 +30,5 @@
     "angular-strap": "^2.3.12",
     "metisMenu": "metismenu#^2.6.2",
   },
-  "directory": "public/",
+  "directory": "public/"
 }
