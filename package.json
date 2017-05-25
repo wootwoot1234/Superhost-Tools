@@ -40,7 +40,7 @@
     "bower": "1.8.0"
   },
   "scripts": {
-      "postinstall": "./node_modules/bower/bin/bower install"
+      "postinstall": "bower install"
   },
   "engines": {
     "node": "7.9.0"
