@@ -1524,21 +1524,6 @@ module.exports = function (app) {
         });
     };
 
-    function sendMeAnEmail(subject, text) {
-        sendEmail("tkrones@gmail.com", subject, text)
-    };
-
-    app.post("/contactUs", function(req, res) {
-        console.log("/contactUs");
-        var name = req.body.name;
-        var email = req.body.email;
-        var message = req.body.message;
-        var subject = "From the Contact Us Form";
-        var text = "From: " + name + " " + email + "\n\nMessage: \n" + message;
-        sendMeAnEmail(subject, text);
-        res.status(200).json("Email Sent");
-    });
-
     function getCalculatedPrices(listing) {
         console.log("getCalculatedPrices()");
         var calculatedPrices = JSON.parse(JSON.stringify(listing.prices));

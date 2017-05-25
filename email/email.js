@@ -41,7 +41,6 @@ exports.sendOne = function (templateName, locals, fn) {
             transport.sendMail({
                 from: config.mailer.defaultFromAddress,
                 to: locals.email,
-                bcc: "tkrones@gmail.com",
                 subject: locals.subject,
                 html: html,
                 // generateTextFromHTML: true,
