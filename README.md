@@ -1,9 +1,12 @@
 # Superhost-Tools
 **Open Source Airbnb Auto Messaging and Pricing Tool for Hosts**
 
-Superhost tools is an auto messaging tool and pricing engine for Airbnb hosts.  It allows you to send automated messages to your Airbnb guests.  Messages can be sent before or after a guests check-in or check-out or can be sent immediately after a booking is made.  In addition to messaging, it can also automatically leave reviews for guests after they check out.  The pricing engine uses Airbnb's Smart Pricing as a base price and allows you to apply rules on top of those prices.  For example, you can set your price 10% higher than Airbnb smart price or increase all weekend prices by $50.  It can also increase or decrease prices over a period of time and you can setup rules for orphan days (a short period between bookings).
+[Superhost tools](https://SuperhostTools.com) is an auto messaging tool and pricing engine for Airbnb hosts.  It allows you to send automated messages to your Airbnb guests.  Messages can be sent before or after a guests check-in or check-out or can be sent immediately after a booking is made.  In addition to messaging, it can also automatically leave reviews for guests after they check out.  The pricing engine uses Airbnb's Smart Pricing as a base price and allows you to apply rules on top of those prices.  For example, you can set your price 10% higher than Airbnb smart price or increase all weekend prices by $50.  It can also increase or decrease prices over a period of time and you can setup rules for orphan days (a short period between bookings).
 
 Try it out.  Let me know what you think.
+
+## Try it out
+[SuperhostTools.com](https://SuperhostTools.com)
 
 ## WARNING
 Superhost tools is still under development.  It works well to the best of my knowledge but I take no responsibility issue it may cause.  Use at your own risk!
