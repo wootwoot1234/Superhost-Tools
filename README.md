@@ -34,10 +34,9 @@ Note: the code is set to not send messages or change prices on Airbnb from a loc
 2. Now start the node instance, open a second terminal window and browse to the projects root directory and type `node app.js`
 3. Open your browser and browse to 'http://localhost:1337/'
 
-## To-do
-### (push requests welcome)
-1. Remove airbnb credentials from DB and just store the access-token
-2. Allow users to manually send a message
-3. Update README to be clearer
-4. Add pricing engine user introduction.  New users are probably pretty confused how to use it.  Need a better explanation of how to use it for users that have just registered accounts.
-5. Create tests for the code
+## To-do (pull requests welcome)
+[ ] Remove airbnb credentials from DB and just store the access-token
+[ ] Allow users to manually send a scheduled message
+[ ] Clean up README
+[ ] Add pricing engine user introduction walk though (similar to the messaging walk though).  New users are probably pretty confused how to use it.  Need a better explanation of how to use it for users that have just registered accounts.
+[ ] Create tests for the code
