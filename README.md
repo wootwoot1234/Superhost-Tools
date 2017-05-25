@@ -35,8 +35,8 @@ Note: the code is set to not send messages or change prices on Airbnb from a loc
 3. Open your browser and browse to 'http://localhost:1337/'
 
 ## To-do (pull requests welcome)
-[ ] Remove airbnb credentials from DB and just store the access-token
-[ ] Allow users to manually send a scheduled message
-[ ] Clean up README
-[ ] Add pricing engine user introduction walk though (similar to the messaging walk though).  New users are probably pretty confused how to use it.  Need a better explanation of how to use it for users that have just registered accounts.
-[ ] Create tests for the code
+- [ ] Remove airbnb credentials from DB and just store the access-token
+- [ ] Allow users to manually send a scheduled message
+- [ ] Clean up README
+- [ ] Add pricing engine user introduction walk though (similar to the messaging walk though).  New users are probably pretty confused how to use it.  Need a better explanation of how to use it for users that have just registered accounts.
+- [ ] Create tests for the code
