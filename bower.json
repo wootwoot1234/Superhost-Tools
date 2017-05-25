@@ -28,7 +28,7 @@
     "angular-bootstrap-calendar": "^0.28.3",
     "angular-moment": "^1.0.1",
     "angular-strap": "^2.3.12",
-    "metisMenu": "metismenu#^2.6.2",
+    "metisMenu": "metismenu#^2.6.2"
   },
   "directory": "public/"
 }
