@@ -930,7 +930,9 @@ module.exports = function (app) {
                             console.log("CHECKING IF THERE ARE ANY BOOKING OR LAST MINUTE MESSAGES");
                             console.log("    Reservation info - confirmation : " + newReservation.airbnbConfirmationCode);
                             var nowTime = moment().tz(listing.airbnbTimeZone).format("H");
-                            var daysTillCheckin = moment().tz(listing.airbnbTimeZone).startOf('day').diff(moment.tz(newReservation.airbnbStartDate, 'YYYY-MM-DD', listing.airbnbTimeZone).startOf('day'), 'days');
+                            var today = moment().tz(listing.airbnbTimeZone).startOf('day');
+                            var checkinDate = moment.tz(newReservation.airbnbStartDate, 'YYYY-MM-DD', listing.airbnbTimeZone).startOf('day');
+                            var daysTillCheckin = checkinDate.diff(today, 'days');
                             // Make sure the new reservation's check-in is today or later not already passed.
                             // We don't want old messages accidentally being sent to guests.
                             console.log("nowTime", nowTime);
