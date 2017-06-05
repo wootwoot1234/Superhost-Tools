@@ -18,7 +18,7 @@ var nodemailer = require('nodemailer');
 // Generic error handler used by all endpoints.
 function handleError(res, reason, message, code) {
     console.log("ERROR: " + reason);
-    console.log(message);
+    console.log("ERROR MSG: " + message);
     return res.status(code || 500).json({"error": message});
 }
 
@@ -636,6 +636,7 @@ module.exports = function(app) {
                     await checkTimeBasedRulesForListing(account, listing);
                 }
             }
+            console.log("Done checking rules");
         } catch(error) {
             handleError(res, error.message, "/checkRules");
         }
@@ -733,12 +734,10 @@ module.exports = function(app) {
                     var nowTime = moment().tz(listing.airbnbTimeZone).format("H");
                     var today = moment().tz(listing.airbnbTimeZone).startOf('day');
                     var checkinDate = moment.tz(newReservation.airbnbStartDate, 'YYYY-MM-DD', listing.airbnbTimeZone).startOf('day');
-                    var daysTillCheckin = checkinDate.diff(today, 'days');
+                    var daysTillCheckin = today.diff(checkinDate, 'days');
                     // Make sure the new reservation's check-in is today or later not already passed.
                     // We don't want old messages accidentally being sent to guests.
-                    console.log("nowTime", nowTime);
-                    console.log("daysTillCheckin", daysTillCheckin);
-                    if(daysTillCheckin >= 0) {
+                    if(daysTillCheckin <= 0) {
                         try {
                             var messageRules = await MessageRule.find({listingID: listing._id});
                             for(var k = 0; k < messageRules.length; k++) {
@@ -785,7 +784,7 @@ module.exports = function(app) {
         return new Promise(async function(resolve, reject) {
             try {
                 var listing = await Listing.findOne({
-                    accountID: account.accountID,
+                    accountID: account._id,
                     airbnbListingID,
                 });
                 var reviewAlreadySentOrIsDisabled = false;
@@ -805,7 +804,7 @@ module.exports = function(app) {
                     // Now we need to find the right thread to add the message to
                     // Get all the reservations then find the reservation that matched the confirmation_code and reply to it with the check in message
                     var reservation = await Reservation.findOne({
-                        accountID: account.accountID,
+                        accountID: account._id,
                         airbnbListingID,
                         airbnbConfirmationCode,
                         airbnbStatus: "accepted"
@@ -851,6 +850,7 @@ module.exports = function(app) {
                                 airbnbConfirmationCode,
                             },
                             {
+                                listingID: listing._id,
                                 messageRuleID: messageRule._id,
                                 airbnbConfirmationCode: airbnbConfirmationCode,
                                 review: reviewMessage,
@@ -878,14 +878,13 @@ module.exports = function(app) {
 
     function buildMessage(account, airbnbListingID, messageRule, airbnbConfirmationCode, isLastMinuteMessage) {
         console.log("buildMessage()");
-        console.log("   buildMessage() account.airbnbUsername", account.airbnbUsername);
-        console.log("   buildMessage() airbnbListingID", airbnbListingID);
-        console.log("   buildMessage() airbnbConfirmationCode", airbnbConfirmationCode);
-        console.log("   buildMessage() messageRule._id", messageRule._id);
+        console.log("    buildMessage() account.airbnbUsername", account.airbnbUsername);
+        console.log("    buildMessage() airbnbListingID", airbnbListingID);
+        console.log("    buildMessage() airbnbConfirmationCode", airbnbConfirmationCode);
         return new Promise(async function(resolve, reject) {
             try {
                 var listing = await Listing.findOne({
-                    accountID: account.accountID,
+                    accountID: account._id,
                     airbnbListingID,
                 });
                 var messages = await Message.find({
@@ -905,7 +904,7 @@ module.exports = function(app) {
                     // Now we need to find the right thread to add the message to
                     // Get all the reservations then find the reservation that matched the confirmation_code and reply to it with the check in message
                     var reservation = await Reservation.findOne({
-                        accountID: account.accountID,
+                        accountID: account._id,
                         airbnbListingID,
                         airbnbConfirmationCode,
                         airbnbStatus: "accepted"
@@ -921,6 +920,7 @@ module.exports = function(app) {
                         var daysTillCheckin = checkinMoment.diff(todayMoment, 'days');
                         var checkInDateFormat = 'ddd, MMMM Do';
                         var checkOutDateFormat = 'ddd, MMMM Do';
+                        console.log("    buildMessage() airbnbFirstName", airbnbFirstName);
                         if(daysTillCheckin == 0) {
                             console.log("    buildMessage() CHECK-IN IS TODAY!!!!!!!!!");
                             checkInDateFormat = '[today,] MMMM Do';
@@ -946,13 +946,13 @@ module.exports = function(app) {
                         messageText = messageText.replace(/{{Check-Out Date}}/g, checkoutDate);
                         messageText = messageText.replace(/{{Check-Out Time}}/g, airbnbCheckOutTime);
                         await sendMessage(account, airbnbThreadID, messageText);
-                        console.log("MESSAGE SENT!, LISTING ID: " + listing.airbnbListingID);
                         await Message.findOneAndUpdate(
                             {
                                 messageRuleID: messageRule._id,
                                 airbnbConfirmationCode,
                             },
                             {
+                                listingID: listing._id,
                                 messageRuleID: messageRule._id,
                                 airbnbConfirmationCode: airbnbConfirmationCode,
                                 message: messageText,
@@ -1149,7 +1149,7 @@ module.exports = function(app) {
                             var messageFromRuleAlreadyExists = false;
                             //var messages = listingByAirbnbistingID[reservation.airbnbListingID].messages;
                             var messages = await Message.find({
-                                listingID: listing.listingID,
+                                listingID: listing._id,
                                 messageRuleID: messageRule._id,
                                 airbnbConfirmationCode: reservation.airbnbConfirmationCode,
                             });
@@ -1669,19 +1669,19 @@ module.exports = function(app) {
             delete newRule._id;
             delete newRule.airbnbListingID;
             if(typeof airbnbListingID == "undefined") {
-                handleError(res, error.message, "/addPricingRule Missing the airbnbListingID property", 400);
+                handleError(res, "Missing the airbnbListingID property", "/addPricingRule Missing the airbnbListingID property", 400);
             }
             if(typeof req.body.title == "undefined") {
-                handleError(res, error.message, "/addPricingRule Missing the title property", 400);
+                handleError(res, "Missing the title property", "/addPricingRule Missing the title property", 400);
             }
             if(typeof req.body.event == "undefined") {
-                handleError(res, error.message, "/addPricingRule Missing the event property", 400);
+                handleError(res, "Missing the event property", "/addPricingRule Missing the event property", 400);
             }
             if(typeof req.body.amount == "undefined") {
-                handleError(res, error.message, "/addPricingRule Missing the amount property", 400);
+                handleError(res, "Missing the amount property", "/addPricingRule Missing the amount property", 400);
             }
             if(typeof req.body.scale == "undefined") {
-                handleError(res, error.message, "/addPricingRule Missing the scale property", 400);
+                handleError(res, "Missing the scale property", "/addPricingRule Missing the scale property", 400);
             }
             try {
                 var accounts = await Account.find({userID: req.user._id});
