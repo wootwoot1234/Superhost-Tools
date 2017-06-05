@@ -23,6 +23,11 @@ Superhost Tools pricing was designed to work Airbnb's smart pricing feature.  If
 ## Install on Heroku
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
+After deplying, add the Config Vars to Heroku for Mailgun to get email to work.
+- MAILGUN_API_KEY
+- MAILGUN_DOMAIN
+- MAILGUN_DEFAULT_FROM_ADDRESS
+
 ## How to install on a local computer
 Note: the code is set to not send messages or change prices on Airbnb from a local dev environment.  I did this because I didn't want to accidentally send a message or set a price during development.  You can either disable this or run it on a server like Heroku.
 
@@ -43,7 +48,8 @@ Note: the code is set to not send messages or change prices on Airbnb from a loc
 - [ ] Clean up README
 - [ ] Add pricing engine user introduction walk though (similar to the messaging walk though).  New users are probably pretty confused how to use it.  Need a better explanation of how to use it for users that have just registered accounts.
 - [ ] Create tests for the code
-- [ ] Re-factor DB code and DB structure.  DB structure and code is inefficient. I could really use some help here from someone that knows mongodb/mongoose better than me.
+- [x] Re-factor DB code and DB structure.  DB structure and code is inefficient. I could really use some help here from someone that knows mongodb/mongoose better than me.
+- [x] Add config values to Heroku Config Vars
 
 ## HELP WANTED
 I'm still currently working on fixing bugs and adding features to Superhost Tools and can use your help.  Send me pull requests and I'll respond ASAP.  :)  Thanks!
