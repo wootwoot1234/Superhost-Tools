@@ -1407,9 +1407,9 @@ module.exports = function(app) {
         if(price.adjustedPrice) {
             // if the price has already been adjusted use the adjusted price, this lets us put pricing rules on top of each other.
             adjustedPrice = price.adjustedPrice;
-        } else if(price.airbnbNativeSuggestedPriceLevel) {
+        } else if(price.airbnbNativeSuggestedPrice) {
             // if there is no adjusted price but there is a smart price use the smart price.
-            adjustedPrice = price.airbnbNativeSuggestedPriceLevel;
+            adjustedPrice = price.airbnbNativeSuggestedPrice;
         }
         var newAdjustedPrice;
         var equation;
