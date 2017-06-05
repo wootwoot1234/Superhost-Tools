@@ -8,7 +8,7 @@ var Account = new Schema({
     airbnbPassword: String,
     airbnbUserID: String,
     airbnbAccessToken: String,
-    lastLoginAttemptSuccessful: {type: Boolean, default: false},
+    lastLoginAttemptSuccessful: Boolean,
 });
 
 module.exports = mongoose.model('Account', Account);

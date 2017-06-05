@@ -338,7 +338,6 @@ module.exports = function(app) {
         return new Promise(async function(resolve, reject) {
             try {
                 var downloadedListings = await getUsersListings(account.airbnbUserID);
-                console.log("downloadedListings", downloadedListings);
                 for(var k = 0; k < downloadedListings.length; k++) {
                     var downloadedListing = downloadedListings[k];
                     var airbnbCheckInTime = downloadedListing.check_in_time;
