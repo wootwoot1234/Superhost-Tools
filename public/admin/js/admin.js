@@ -261,7 +261,7 @@ angular.module("adminApp", ['ngRoute', 'mgcrea.ngStrap', 'mwl.calendar', 'angula
             $scope.messageRules = [];
             $scope.badAccounts = [];
             accounts.forEach(function(account) {
-                if(account.lastLoginAttemptSuccessful) {
+                if(account.lastLoginAttemptSuccessful == false) {
                     $scope.accounts.push(account);
                     $scope.$parent.accounts.push(account);
                     account.listings.forEach(function(listing) {
