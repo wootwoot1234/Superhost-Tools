@@ -129,7 +129,7 @@ module.exports = function(app) {
                         },
                         {new: true, upsert: true}
                     );
-                    initAirbnbAccount(req, res, account);
+                    await initAirbnbAccount(req, res, account);
                     res.status(200).json("success");
                 } catch(error) {
                     handleError(res, error.message, "/addAccount");
@@ -162,28 +162,30 @@ module.exports = function(app) {
         }
     });
 
-    async function initAirbnbAccount(req, res, account) {
+    function initAirbnbAccount(req, res, account) {
         console.log("initAirbnbAccount()");
-        var airbnbUserID;
-        try {
-            airbnbUserID = await downloadAirbnbUserID(account);
-            var account = await Account.findOneAndUpdate(
-                // query
-                {
-                    userID: req.user._id,
-                    airbnbUsername: account.airbnbUsername
-                },
-                // update
-                {
-                    airbnbUserID: airbnbUserID
-                },
-                {new: true}
-            );
-            await downloadAirbnbListings(req.user, account);
-            await getNewReservations(account, true);
-        } catch (error) {
-            handleError(res, error.message, "initAirbnbAccount()", 400);
-        }
+        return new Promise(async function(resolve, reject) {
+            try {
+                var airbnbUserID = await downloadAirbnbUserID(account);
+                account = await Account.findOneAndUpdate(
+                    // query
+                    {
+                        userID: req.user._id,
+                        airbnbUsername: account.airbnbUsername
+                    },
+                    // update
+                    {
+                        airbnbUserID: airbnbUserID
+                    },
+                    {new: true}
+                );
+                await downloadAirbnbListings(req.user, account);
+                await getNewReservations(account, true);
+                resolve();
+            } catch (error) {
+                reject(error);
+            }
+        });
     }
 
     app.post('/addMessageRule', async function(req, res){
@@ -326,7 +328,7 @@ module.exports = function(app) {
             try {
                 var data = await getUserInfo(account);
                 var airbnbUserID = data.user.user.id;
-                resolve(airbnbUserID)
+                resolve(airbnbUserID);
             } catch (error) {
                 reject(error);
             }
@@ -550,7 +552,6 @@ module.exports = function(app) {
             } catch (error) {
                 // Looks like the login didn't work
                 try {
-                    console.log("account._id", account._id);
                     await Account.findByIdAndUpdate(account._id,
                         {
                             lastLoginAttemptSuccessful: false,
