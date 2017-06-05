@@ -1,79 +1,3 @@
-<style type="text/css">
-    mwl-calendar .cal-day-today {
-        background-color: #fff;
-    }
-    mwl-calendar .cal-day-past {
-        background-color: #ccc;
-    }
-    mwl-calendar .cal-date {
-        text-align: left;
-        padding: 10px;
-    }
-    mwl-calendar .cal-day-today .cal-date,
-    mwl-calendar .cal-day-today .cal-bottom-right {
-        font-weight: bold;
-    }
-    mwl-calendar .cal-price {
-        text-align: center;
-        font-size: 3rem;
-        font-weight: 600;
-        line-height: 0.9;
-        position: absolute;
-        top: 50%;
-        height: 30px;
-        margin-top: -15px;
-        left: 0;
-        right: 0;
-    }
-    mwl-calendar .cal-price.busy {
-        color: #dce0e0;
-    }
-    mwl-calendar .cal-day-past .cal-price {
-        color: #a0a0a0;
-    }
-    mwl-calendar .cal-day-past .cal-price.busy {
-        color: #EEEEEE;
-    }
-    mwl-calendar .cal-day-busy {
-        background-color: #eee;
-    }
-    mwl-calendar .cal-bottom-right {
-        position: absolute;
-        right: 0;
-        bottom: 0;
-        padding: 10px;
-    }
-/*    mwl-calendar .reservation-bar {
-        background-color: #00a699;
-        color: #fff;
-    }
-    mwl-calendar .tile-bar {
-        position: absolute;
-        top: 50%;
-        height: 22px;
-        margin-top: -11px;
-        left: 0;
-        right: 0;
-    }
-    mwl-calendar .tile-bar-first {
-        -webkit-border-top-left-radius: 11px;
-        -moz-border-radius-topleft: 11px;
-        border-top-left-radius: 11px;
-        -webkit-border-bottom-left-radius: 11px;
-        -moz-border-radius-bottomleft: 11px;
-        border-bottom-left-radius: 11px;
-    }
-    mwl-calendar .tile-bar-last {
-        -webkit-border-top-right-radius: 11px;
-        -moz-border-radius-topright: 11px;
-        border-top-right-radius: 11px;
-        -webkit-border-bottom-right-radius: 11px;
-        -moz-border-radius-bottomright: 11px;
-        border-bottom-right-radius: 11px;
-    }*/
-}
-</style>
-
 <script id="customMonthCell.html" type="text/ng-template">
     <div class="cal-month-day text-center"
         ng-class="{
@@ -135,12 +59,8 @@
             </div>
             <ul class="unstyled list-unstyled" ng-repeat="event in vm.events | filter: {type: 'price'} | orderBy:'startsAt' track by event.calendarEventId">
                 <li>
-                    Airbnb Base Smart Price  <i class="fa fa-question-circle text-muted" bs-tooltip data-title="This is the price Airbnb uses to calculate your listing's nightly rate.  Airbnb uses many factors including history, demand and availability to calculate your specific base price. Airbnb simply increases this value by a given percentage when calculating your 'Smart Price' but often by not enough."></i><br/>
-                    &nbsp&nbsp&nbsp&nbsp\(\mathsf{\${{event.airbnbNativeSuggestedPriceLevels[0]}}}\)
-                </li>
-                <li>
                     Airbnb Smart Price  <i class="fa fa-question-circle text-muted" bs-tooltip data-title="This is the price Airbnb would set your listing to if you turned on smart pricing.  This is typically too low."></i><br/>
-                    &nbsp&nbsp&nbsp&nbsp\(\mathsf{\${{event.airbnbNativeSuggestedPrice}} = \${{event.airbnbNativeSuggestedPriceLevels[0]}} + ${{event.airbnbNativeSuggestedPriceLevels[0]}} \times {{event.airbnbNativeSuggestedPricePercentage}}\%}\)
+                    &nbsp&nbsp&nbsp&nbsp\(\mathsf{\${{event.airbnbNativeSuggestedPrice}}}\)
                 </li>
                 <li ng-repeat="rule in event.appliedRules">
                     {{rule.title}}:<br/>&nbsp&nbsp&nbsp&nbsp{{rule.equation}}

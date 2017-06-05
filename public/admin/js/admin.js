@@ -197,6 +197,7 @@ angular.module("adminApp", ['ngRoute', 'mgcrea.ngStrap', 'mwl.calendar', 'angula
         $scope.showListingSettings = function(listing) {
             console.log("showListingSettings()");
             $scope.listingSettings.airbnbListingID = listing.airbnbListingID;
+            $scope.listingSettings.airbnbName = listing.airbnbName;
             $scope.listingSettings.nickname = listing.nickname;
             $scope.listingSettings.minPrice = listing.minPrice;
             listingSettingsModal.$promise.then(listingSettingsModal.show);
@@ -559,8 +560,8 @@ angular.module("adminApp", ['ngRoute', 'mgcrea.ngStrap', 'mwl.calendar', 'angula
                         message: "Hi {{Guest Name}},\n\n" +
 
                             "Just wanted to touch base and give you some more information about your stay.  You are welcome " +
-                            "to check-in anytime after {{Check-In Time}} on {{Check-In Date}}.  Your checkout time " +
-                            "is {{Check-Out Time}} on {{Check-Out Date}}.\n\n" +
+                            "to check-in anytime after {{Check-In Time}} {{Check-In Date}}.  Your checkout time " +
+                            "is {{Check-Out Time}} {{Check-Out Date}}.\n\n" +
 
                             "LOCATION:\n" +
                             "1234 Main St, City, State Zip\n\n" +
