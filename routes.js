@@ -1548,7 +1548,7 @@ module.exports = function(app) {
                 _format: "host_calendar",
             };
 
-            if(process.env.NODE_ENV == "production") {
+            if(false){// process.env.NODE_ENV == "production") {
                 try {
                     var data = await performAirbnbRequest(account, endpoint, method, headers, body, URLParams);
                     resolve(data);
