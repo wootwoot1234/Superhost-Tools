@@ -2,7 +2,7 @@ var mongoose = require('mongoose'),
     Schema = mongoose.Schema;
 
 var Reservation = new Schema({
-    accountID: {type: mongoose.Schema.Types.ObjectId, ref: 'account'},
+    accountID: {type: mongoose.Schema.Types.ObjectId, ref: 'account', required: true},
     airbnbThreadID: String,
     airbnbConfirmationCode: String,
     airbnbListingID: String,

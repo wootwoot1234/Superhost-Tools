@@ -28,6 +28,7 @@
     "angular-moment": "^1.0.1",
     "angular-strap": "^2.3.12",
     "metisMenu": "metismenu#^2.6.2",
-    "angular-bootstrap-calendar": "^0.29.1"
+    "angular-bootstrap-calendar": "^0.29.1",
+    "angular-drag-and-drop-lists": "^2.1.0"
   }
 }

@@ -1,4 +1,4 @@
-angular.module("adminApp", ['ngRoute', 'mgcrea.ngStrap', 'mwl.calendar', 'angularMoment'])
+angular.module("adminApp", ['ngRoute', 'mgcrea.ngStrap', 'mwl.calendar', 'angularMoment', 'dndLists'])
     .config(function($routeProvider) {
         $routeProvider
             .when("/", {
@@ -620,7 +620,7 @@ angular.module("adminApp", ['ngRoute', 'mgcrea.ngStrap', 'mwl.calendar', 'angula
                         minNights: $scope.getOption($scope.minNights, 2),
                         message: "Hi {{Guest Name}},\n\n" +
 
-                            "Just wanted to check in and make sure you have everything you need.\n\n" +
+                            "Just wanted to check in and make sure you have everything you need?\n\n" +
 
                             "Hope you're enjoying your stay!",
                         lastMinuteMessageEnabled: false,
@@ -847,7 +847,7 @@ angular.module("adminApp", ['ngRoute', 'mgcrea.ngStrap', 'mwl.calendar', 'angula
             }
         };
     })
-    .controller("CalendarController", function($scope, $routeParams, $location, accounts, moment, prices, reservations, $modal, $http, $route, $rootScope) {
+    .controller("CalendarController", function($scope, $routeParams, $location, accounts, moment, prices, reservations, $modal, $http, $route, $rootScope, $timeout) {
         console.log("CalendarController");
         var airbnbListingID = $routeParams.airbnbListingID;
         if(!airbnbListingID || !accounts) {
@@ -959,12 +959,18 @@ angular.module("adminApp", ['ngRoute', 'mgcrea.ngStrap', 'mwl.calendar', 'angula
             },{
                 value: "gradualPercentage",
                 text: "Gradual Percentage"
+            },{
+                value: "minPrice",
+                text: "Minimum Price"
+            },{
+                value: "maxPrice",
+                text: "Maximum Price"
             }
         ];
 
         $scope.onScaleChange = function() {
             console.log("onScaleChange()");
-            if($scope.newRule.scale.value == "fixedPrice" || $scope.newRule.scale.value == "gradualPrice") {
+            if($scope.newRule.scale.value == "fixedPrice" || $scope.newRule.scale.value == "gradualPrice" || $scope.newRule.scale.value == "minPrice" || $scope.newRule.scale.value == "maxPrice") {
                 $scope.amountIsDollars = true;
             } else {
                 $scope.amountIsDollars = false;
@@ -1176,6 +1182,43 @@ angular.module("adminApp", ['ngRoute', 'mgcrea.ngStrap', 'mwl.calendar', 'angula
         $scope.templateData = {
             addSpecificDatePricingRule: $scope.addSpecificDatePricingRule,
         }
+
+        // Model to JSON for demo purpose
+        var initializing = true;
+        $scope.$watch('pricingRules', function(newPricingOrder, oldPricingOrder) {
+            if (initializing) {
+                $timeout(function() {initializing = false;});
+            } else {
+                $timeout.cancel($scope.orderTimer);
+                $scope.orderTimer = $timeout(function() {
+                    var pricingOrder = [];
+                    newPricingOrder.forEach(function(rule, ruleIndex) {
+                        pricingOrder.push(rule._id);
+                    });
+                    var data = {
+                        pricingOrder: pricingOrder,
+                        airbnbListingID: $scope.listing.airbnbListingID
+                    };
+                    // Posting data to server
+                    $http.post('../reorderPricing', data)
+                    .success(function(data) {
+                        if (data.errors) {
+                            console.log(data.errors);
+                            $location.path('/admin/#/');
+                        } else if(data == "success") {
+                            $route.reload();
+                        }
+                    })
+                    .error(function (error) {
+                        console.log(error);
+                        if(error.error.error_code == 403) {
+                            $location.path('/admin/#/');
+                        }
+                    });
+                }, 50);
+            }
+        }, true);
+
     })
     .service('TextInsert', function() {
         return {

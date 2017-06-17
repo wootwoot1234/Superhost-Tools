@@ -2,7 +2,7 @@ var mongoose = require('mongoose'),
     Schema = mongoose.Schema;
 
 var MessageRule = new Schema({
-    listingID: {type: mongoose.Schema.Types.ObjectId, ref: 'listing'},
+    listingID: {type: mongoose.Schema.Types.ObjectId, ref: 'listing', required: true},
     message: String,
     title: String,
     event: String,

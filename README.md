@@ -6,10 +6,8 @@
 Try it out.  Let me know what you think.
 
 ## Try it out
-[SuperhostTools.com](https://SuperhostTools.com)
 
-## WARNING
-Superhost tools is still under development.  It works well to the best of my knowledge but I take no responsibility issue it may cause.  Use at your own risk!
+[SuperhostTools.com](https://SuperhostTools.com)
 
 ## Requirements
 Superhost Tools pricing was designed to work Airbnb's smart pricing feature.  If your account does not have smart pricing, contact Airbnb and ask them to enable it.  Superhost tools has not been tested with Airbnb hosting accounts that don't have smart pricing but in theory should still work.
@@ -18,15 +16,16 @@ Superhost Tools pricing was designed to work Airbnb's smart pricing feature.  If
 2. Node
 3. npm
 4. MonogoDB
-5. Maingun account (for email)
+5. UptimeRobot.com account (to ping server)
 
 ## Install on Heroku
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
-After deplying, add the Config Vars to Heroku for Mailgun to get email to work.
-- MAILGUN_API_KEY
-- MAILGUN_DOMAIN
-- MAILGUN_DEFAULT_FROM_ADDRESS
+After deploying:
+- Login to the Mailgun account created for you by Heroku to verify it.
+- Set UptimeRobot.com to ping the following URLs every 15 min:
+  - yourHerokuDomain.com/checkRules
+  - yourHerokuDomain.com/updatePricing
 
 ## How to install on a local computer
 Note: the code is set to not send messages or change prices on Airbnb from a local dev environment.  I did this because I didn't want to accidentally send a message or set a price during development.  You can either disable this or run it on a server like Heroku.
@@ -45,11 +44,14 @@ Note: the code is set to not send messages or change prices on Airbnb from a loc
 - [x] Add Heroku deploy button.
 - [ ] Remove airbnb credentials from DB and just store the access-token
 - [ ] Allow users to manually send a scheduled message
+- [ ] Allow users to modify messages individually
 - [ ] Clean up README
 - [ ] Add pricing engine user introduction walk though (similar to the messaging walk though).  New users are probably pretty confused how to use it.  Need a better explanation of how to use it for users that have just registered accounts.
 - [ ] Create tests for the code
-- [x] Re-factor DB code and DB structure.  DB structure and code is inefficient. I could really use some help here from someone that knows mongodb/mongoose better than me.
-- [x] Add config values to Heroku Config Vars
+- [x] Re-factor DB code and DB structure.
+- [ ] Add config values to Heroku Config Vars
+- [x] Reorder pricing rules
+- [x] Add min and max pricing rules
 
 ## HELP WANTED
 I'm still currently working on fixing bugs and adding features to Superhost Tools and can use your help.  Send me pull requests and I'll respond ASAP.  :)  Thanks!

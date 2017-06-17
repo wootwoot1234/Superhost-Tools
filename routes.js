@@ -93,7 +93,7 @@ module.exports = function(app) {
                     for(var k = 0; k < listings.length; k++) {
                         var listing = listings[k];
                         var messageRules = await MessageRule.find({listingID: listing._id});
-                        var priceRules = await PriceRule.find({listingID: listing._id});
+                        var priceRules = await PriceRule.find({listingID: listing._id}).sort({order: 1});
                         listings[k].rules = {
                             messages: messageRules,
                             pricing: priceRules,
@@ -103,6 +103,7 @@ module.exports = function(app) {
                 }
                 res.status(200).json(accounts);
             } catch(error) {
+                console.log(error);
                 handleError(res, error.message, "/getAccounts");
             }
         }
@@ -132,6 +133,7 @@ module.exports = function(app) {
                     await initAirbnbAccount(req, res, account);
                     res.status(200).json("success");
                 } catch(error) {
+                    console.log(error);
                     handleError(res, error.message, "/addAccount");
                 }
             } else {
@@ -153,6 +155,7 @@ module.exports = function(app) {
                         airbnbUsername
                     }).remove();
                 } catch(error) {
+                    console.log(error);
                     handleError(res, error.message, "/deleteAccount", 400);
                 }
                 res.status(200).json("success");
@@ -215,6 +218,7 @@ module.exports = function(app) {
                     await MessageRule.create(newRule);
                 }
             } catch(error) {
+                console.log(error);
                 handleError(res, error.message, "/addMessageRule", 400);
             }
             res.status(200).json("success");
@@ -243,6 +247,7 @@ module.exports = function(app) {
                     _id: _id
                 }).remove();
             } catch(error) {
+                console.log(error);
                 handleError(res, error.message, "/deleteMessageRule", 400);
             }
             res.status(200).json("success");
@@ -279,6 +284,7 @@ module.exports = function(app) {
                     }
                 );
             } catch(error) {
+                console.log(error);
                 handleError(res, error.message, "/editListingSettings", 400);
             }
             res.status(200).json("success");
@@ -313,6 +319,7 @@ module.exports = function(app) {
                 );
                 res.status(200).json("success");
             } catch(error) {
+                console.log(error);
                 handleError(res, error.message, "/disableMessage", 400);
             }
         }
@@ -375,6 +382,7 @@ module.exports = function(app) {
         return new Promise(async function(resolve, reject) {
             try {
                 var downloadedReservations = await getReservations(account);
+                var reservations = await Reservation.find({});
                 var newReservations = [];
                 for(var k = 0; k < downloadedReservations.length; k++) {
                     var downloadedReservation = downloadedReservations[k];
@@ -386,12 +394,14 @@ module.exports = function(app) {
                     var airbnbFirstName = downloadedReservation.guest.first_name;
                     var airbnbStatus = downloadedReservation.status;
                     var airbnbThumbnailUrl = downloadedReservation.guest.thumbnail_url;
-                    var reservation = await Reservation.findOneAndUpdate(
-                        {
-                            accountID: account._id,
-                            airbnbConfirmationCode,
-                        },
-                        {
+                    var isNewReservation = true;
+                    reservations.forEach(function(reservation) {
+                        if(downloadedReservation.confirmation_code == reservation.airbnbConfirmationCode) {
+                            isNewReservation = false;
+                        }
+                    });
+                    if(isNewReservation) {
+                        var newReservation = {
                             accountID: account._id,
                             airbnbThreadID,
                             airbnbConfirmationCode,
@@ -401,10 +411,19 @@ module.exports = function(app) {
                             airbnbFirstName,
                             airbnbStatus,
                             airbnbThumbnailUrl,
-                        },
-                        {new: true, upsert:true}
-                    );
-                    newReservations.push(reservation);
+                        };
+                        if(addNewReservationsToDB) {
+                            await Reservation.findOneAndUpdate(
+                                {
+                                    accountID: account._id,
+                                    airbnbConfirmationCode,
+                                },
+                                newReservation,
+                                {upsert:true}
+                            );
+                        }
+                        newReservations.push(newReservation);
+                    }
                 }
                 resolve(newReservations);
             } catch(error) {
@@ -628,10 +647,10 @@ module.exports = function(app) {
             var accounts = await Account.find({});
             for(var k = 0; k < accounts.length; k++) {
                 var account = accounts[k];
+                var newReservations = await getNewReservations(account, true);
                 var listings = await Listing.find({accountID : account._id});
                 for(var i = 0; i < listings.length; i++) {
                     var listing = listings[i];
-                    var newReservations = await getNewReservations(account, true);
                     await checkBookingBasedRulesForListing(account, listing, newReservations);
                     await checkTimeBasedRulesForListing(account, listing);
                 }
@@ -729,42 +748,44 @@ module.exports = function(app) {
             if(newReservations.length) {
                 for(var i = 0; i < newReservations.length; i++) {
                     var newReservation = newReservations[i];
-                    console.log("CHECKING IF THERE ARE ANY BOOKING OR LAST MINUTE MESSAGES");
-                    console.log("    Reservation info - confirmation : " + newReservation.airbnbConfirmationCode);
-                    var nowTime = moment().tz(listing.airbnbTimeZone).format("H");
-                    var today = moment().tz(listing.airbnbTimeZone).startOf('day');
-                    var checkinDate = moment.tz(newReservation.airbnbStartDate, 'YYYY-MM-DD', listing.airbnbTimeZone).startOf('day');
-                    var daysTillCheckin = today.diff(checkinDate, 'days');
-                    // Make sure the new reservation's check-in is today or later not already passed.
-                    // We don't want old messages accidentally being sent to guests.
-                    if(daysTillCheckin <= 0) {
-                        try {
-                            var messageRules = await MessageRule.find({listingID: listing._id});
-                            for(var k = 0; k < messageRules.length; k++) {
-                                var messageRule = messageRules[k];
-                                var shouldSendMessage = false;
-                                var isLastMinuteMessage = false;
-                                if(messageRule.event == "booking") {
-                                    console.log("    FOUND A BOOKING MESSAGE, WILL SEND MESSAGE");
-                                    shouldSendMessage = true;
-                                } else if(messageRule.event == "checkin" && messageRule.lastMinuteMessageEnabled) {
-                                    console.log("    FOUND A LAST MINUTE MESSAGE");
-                                    var isLastMinuteMessage = true;
-                                    console.log("       Rules set to fire at " + messageRule.time + " hour and " + messageRule.days + " days before checkin");
-                                    console.log("       Calculated that the new reservation has " + daysTillCheckin + " days before checkin and the current hour at the listing is " + nowTime);
-                                    if(messageRule.days < daysTillCheckin || (messageRule.days == daysTillCheckin && messageRule.time < nowTime)) {
-                                        console.log("       WILL SEND MESSAGE");
+                    if(newReservation.airbnbListingID == listing.airbnbListingID) {
+                        console.log("CHECKING IF THERE ARE ANY BOOKING OR LAST MINUTE MESSAGES");
+                        console.log("    Reservation info - confirmation : " + newReservation.airbnbConfirmationCode);
+                        var nowTime = moment().tz(listing.airbnbTimeZone).format("H");
+                        var today = moment().tz(listing.airbnbTimeZone).startOf('day');
+                        var checkinDate = moment.tz(newReservation.airbnbStartDate, 'YYYY-MM-DD', listing.airbnbTimeZone).startOf('day');
+                        var daysTillCheckin = today.diff(checkinDate, 'days');
+                        // Make sure the new reservation's check-in is today or later not already passed.
+                        // We don't want old messages accidentally being sent to guests.
+                        if(daysTillCheckin <= 0) {
+                            try {
+                                var messageRules = await MessageRule.find({listingID: listing._id});
+                                for(var k = 0; k < messageRules.length; k++) {
+                                    var messageRule = messageRules[k];
+                                    var shouldSendMessage = false;
+                                    var isLastMinuteMessage = false;
+                                    if(messageRule.event == "booking") {
+                                        console.log("    FOUND A BOOKING MESSAGE, WILL SEND MESSAGE");
                                         shouldSendMessage = true;
-                                    } else {
-                                        console.log("       WILL NOT SEND MESSAGE");
+                                    } else if(messageRule.event == "checkin" && messageRule.lastMinuteMessageEnabled) {
+                                        console.log("    FOUND A LAST MINUTE MESSAGE");
+                                        var isLastMinuteMessage = true;
+                                        console.log("       Rules set to fire at " + messageRule.time + " hour and " + messageRule.days + " days before checkin");
+                                        console.log("       Calculated that the new reservation has " + daysTillCheckin + " days before checkin and the current hour at the listing is " + nowTime);
+                                        if(messageRule.days < daysTillCheckin || (messageRule.days == daysTillCheckin && messageRule.time < nowTime)) {
+                                            console.log("       WILL SEND MESSAGE");
+                                            shouldSendMessage = true;
+                                        } else {
+                                            console.log("       WILL NOT SEND MESSAGE");
+                                        }
+                                    }
+                                    if(shouldSendMessage) {
+                                        await buildMessage(account, newReservation.airbnbListingID, messageRule, newReservation.airbnbConfirmationCode, isLastMinuteMessage);
                                     }
                                 }
-                                if(shouldSendMessage) {
-                                    await buildMessage(account, newReservation.airbnbListingID, messageRule, newReservation.airbnbConfirmationCode, isLastMinuteMessage);
-                                }
+                            } catch(error) {
+                                reject(error);
                             }
-                        } catch(error) {
-                            reject(error);
                         }
                     }
                 }
@@ -777,10 +798,10 @@ module.exports = function(app) {
 
     function leaveReview(account, airbnbListingID, messageRule, airbnbConfirmationCode, airbnbThreadID) {
         console.log("leaveReview()");
-        console.log("   leaveReview() account.airbnbUsername", account.airbnbUsername);
-        console.log("   leaveReview() airbnbListingID", airbnbListingID);
-        console.log("   leaveReview() airbnbConfirmationCode", airbnbConfirmationCode);
-        console.log("   leaveReview() airbnbThreadID", airbnbThreadID);
+        console.log("    leaveReview() account.airbnbUsername", account.airbnbUsername);
+        console.log("    leaveReview() airbnbListingID", airbnbListingID);
+        console.log("    leaveReview() airbnbConfirmationCode", airbnbConfirmationCode);
+        console.log("    leaveReview() airbnbThreadID", airbnbThreadID);
         return new Promise(async function(resolve, reject) {
             try {
                 var listing = await Listing.findOne({
@@ -820,6 +841,7 @@ module.exports = function(app) {
                         var daysTillCheckin = checkinMoment.diff(todayMoment, 'days');
                         var checkInDateFormat = 'ddd, MMMM Do';
                         var checkOutDateFormat = 'ddd, MMMM Do';
+                        console.log("    leaveReview() airbnbFirstName", airbnbFirstName);
                         if(daysTillCheckin == 0) {
                             console.log("    leaveReview() CHECK-IN IS TODAY!!!!!!!!!");
                             checkInDateFormat = '[today,] MMMM Do';
@@ -852,7 +874,7 @@ module.exports = function(app) {
                             {
                                 listingID: listing._id,
                                 messageRuleID: messageRule._id,
-                                airbnbConfirmationCode: airbnbConfirmationCode,
+                                airbnbConfirmationCode,
                                 review: reviewMessage,
                                 sentEvent: messageRule.event,
                                 sentDate: moment().toDate(),
@@ -866,7 +888,7 @@ module.exports = function(app) {
                             listingName = listing.nickname;
                         }
                         var user = await User.findById(account.userID);
-                        sendEmail(user.username, "5 Start Review for " + airbnbFirstName + " @ " + listingName, reviewMessage);
+                        sendMessageEmail(user.username, "5 Start Review for " + airbnbFirstName + " @ " + listingName, reviewMessage, airbnbConfirmationCode);
                     }
                 }
                 resolve();
@@ -954,7 +976,7 @@ module.exports = function(app) {
                             {
                                 listingID: listing._id,
                                 messageRuleID: messageRule._id,
-                                airbnbConfirmationCode: airbnbConfirmationCode,
+                                airbnbConfirmationCode,
                                 message: messageText,
                                 sentEvent: messageRule.event,
                                 sentDate: moment().toDate(),
@@ -968,7 +990,7 @@ module.exports = function(app) {
                             listingName = listing.nickname;
                         }
                         var user = await User.findById(account.userID);
-                        sendEmail(user.username, "Message for " + airbnbFirstName + " @ " + listingName, messageText);
+                        sendMessageEmail(user.username, "Message for " + airbnbFirstName + " @ " + listingName, messageText, airbnbConfirmationCode);
                     }
                 }
                 resolve();
@@ -1283,6 +1305,7 @@ module.exports = function(app) {
                 });
                 res.status(200).json(allMessages);
             } catch(error) {
+                console.log(error);
                 handleError(res, error.message, "/getMessages", 400);
             }
         }
@@ -1298,7 +1321,7 @@ module.exports = function(app) {
             subject: subject,
             messageText: text
         };
-        mailer.sendOne('register', locals, function (error, responseStatus, html, text) {
+        mailer.sendOne('standard', locals, function (error, responseStatus, html, text) {
             console.log("sendEmail() error", error);
             console.log("sendEmail() responseStatus", responseStatus);
             //console.log("html", html);
@@ -1310,9 +1333,16 @@ module.exports = function(app) {
         console.log("getCalculatedPrices()");
         return new Promise(async function(resolve, reject) {
             try {
-                var calculatedPrices = await Price.find({listingID: listing._id});
+                var today = moment().startOf('day');
+                var yesterday = moment(today).subtract(1, 'days');
+                var calculatedPrices = await Price.find({
+                    listingID: listing._id,
+                    date: {
+                        $gte: yesterday.toDate(),
+                    }
+                });
                 calculatedPrices = JSON.parse(JSON.stringify(calculatedPrices));
-                var pricingRules = await PriceRule.find({listingID: listing._id});
+                var pricingRules = await PriceRule.find({listingID: listing._id}).sort({order: 1});
                 pricingRules.forEach(function(rule) {
                     switch(rule.event) {
                         case "floatingPeriod":
@@ -1380,7 +1410,7 @@ module.exports = function(app) {
                         break;
                     }
                 });
-                // Check min price
+                // Check listing min price
                 calculatedPrices.forEach(function(price, priceIndex) {
                     if(listing.minPrice && price.adjustedPrice < listing.minPrice) {
                         var rule = {
@@ -1414,9 +1444,23 @@ module.exports = function(app) {
         var newAdjustedPrice;
         var equation;
         switch(rule.scale) {
+            case "minPrice":
+                if(rule.amount > adjustedPrice) {
+                    newAdjustedPrice = parseInt(rule.amount);
+                } else {
+                    newAdjustedPrice = adjustedPrice;
+                }
+                equation = "\\(\\mathsf{\\$" + newAdjustedPrice + " = if\\ \\$" + rule.amount + " > \\$" + adjustedPrice + "\\ then\\ \\$" + rule.amount + "}\\)";
+            break;
+            case "maxPrice":
+                if(rule.amount < adjustedPrice) {
+                    newAdjustedPrice = parseInt(rule.amount);
+                }
+                equation = "\\(\\mathsf{\\$" + newAdjustedPrice + " = if\\ \\$" + rule.amount + " < \\$" + adjustedPrice + "\\ then\\ \\$" + rule.amount + "}\\)";
+            break;
             case "fixedPrice":
                 newAdjustedPrice = parseInt(rule.amount);
-                equation = "\\(\\mathsf{\\$" + newAdjustedPrice + " = \\$" + rule.amount + "}\\)";
+                equation = "\\(\\mathsf{\\$" + rule.amount + "}\\)";
             break;
             case "fixedPercentage":
                 newAdjustedPrice = parseInt((rule.amount/100) * adjustedPrice + adjustedPrice);
@@ -1452,7 +1496,7 @@ module.exports = function(app) {
             if(listing.pricesUpdatedLast) {
                 console.log("PRICING LAST SYNCED WITH AIRBNB " + now.diff(moment(listing.pricesUpdatedLast), "hour") + " HOUR(S) AGO");
             } else {
-                console.log("PRICING HAS NEVER BEEN SYNCED WITH AIRBNB");
+                console.log("PRICING HAS NEVER BEEN SYNCED WITH AIRBNB - airbnbListingID: " + listing.airbnbListingID);
             }
             // Only update pricing when enabled
             // Only update pricing once per interval.
@@ -1461,8 +1505,8 @@ module.exports = function(app) {
                     var calculatedPrices = await getCalculatedPrices(listing);
                     // Set new calculated prices on Airbnb
                     for(var i = 0; i < calculatedPrices.length; i++) {
-                        if(calculatedPrices[i].airbnbAvailable) {
-                            var calculatedPrice = calculatedPrices[i];
+                        var calculatedPrice = calculatedPrices[i];
+                        if(calculatedPrice.airbnbAvailable && calculatedPrice.adjustedPrice) {
                             var startDate = calculatedPrice.airbnbDate;
                             var endDate = calculatedPrice.airbnbDate;
                             var price = calculatedPrice.adjustedPrice;
@@ -1502,6 +1546,7 @@ module.exports = function(app) {
                 for(var i = 0; i < calendar.length; i++) {
                     var day = calendar[i];
                     var airbnbDate = day.date;
+                    var date = moment(airbnbDate, "YYYY-MM-DD").startOf('day').toDate();
                     var airbnbNativeSuggestedPriceLevels = day.price.native_suggested_price_levels;
                     var airbnbNativeSuggestedPrice = day.price.native_suggested_price;
                     var airbnbNativeSuggestedPricePercentage = parseInt(100 * airbnbNativeSuggestedPriceLevels[0] / airbnbNativeSuggestedPrice);
@@ -1512,6 +1557,7 @@ module.exports = function(app) {
                         airbnbDate,
                     },{
                         listingID: listing._id,
+                        date,
                         airbnbDate,
                         airbnbNativeSuggestedPrice,
                         airbnbNativeSuggestedPriceLevels,
@@ -1548,7 +1594,7 @@ module.exports = function(app) {
                 _format: "host_calendar",
             };
 
-            if(false){// process.env.NODE_ENV == "production") {
+            if(process.env.NODE_ENV == "production") {
                 try {
                     var data = await performAirbnbRequest(account, endpoint, method, headers, body, URLParams);
                     resolve(data);
@@ -1584,6 +1630,7 @@ module.exports = function(app) {
                 });
                 res.status(200).json(allReservations);
             } catch(error) {
+                console.log(error);
                 handleError(res, error.message, "/getReservations", 400);
             }
         }
@@ -1608,6 +1655,7 @@ module.exports = function(app) {
                 }
                 res.status(200).json(calculatedPrices);
             } catch(error) {
+                console.log(error);
                 handleError(res, error.message, "/getPrices", 400);
             }
         }
@@ -1628,6 +1676,7 @@ module.exports = function(app) {
                 }
             }
         } catch (error) {
+            console.log(error);
             handleError(res, error.message, "/updatePricing");
         }
     });
@@ -1653,6 +1702,7 @@ module.exports = function(app) {
                 await updateListingPricing(account, listing, 1);
                 res.status(200).json("success");
             } catch (error) {
+                console.log(error);
                 handleError(res, error.message, "/forceUpdatePricing");
             }
         }
@@ -1700,6 +1750,7 @@ module.exports = function(app) {
                     await PriceRule.create(newRule);
                 }
             } catch(error) {
+                console.log(error);
                 handleError(res, error.message, "/addPricingRule", 400);
             }
             res.status(200).json("success");
@@ -1728,6 +1779,7 @@ module.exports = function(app) {
                     _id: _id
                 }).remove();
             } catch(error) {
+                console.log(error);
                 handleError(res, error.message, "/deletePricingRule", 400);
             }
             res.status(200).json("success");
@@ -1742,6 +1794,11 @@ module.exports = function(app) {
             var pricingEnabled = req.body.pricingEnabled;
             var airbnbListingID = req.body.airbnbListingID;
             try {
+                var accounts = await Account.find({userID: req.user._id});
+                var accountIDs = [];
+                accounts.forEach(function(account) {
+                    accountIDs.push(account._id);
+                });
                 var listings = await Listing.findOneAndUpdate(
                     {
                         accountID: {$in: accountIDs},
@@ -1750,84 +1807,52 @@ module.exports = function(app) {
                     {pricingEnabled}
                 );
             } catch(error) {
+                console.log(error);
                 handleError(res, error.message, "/enablePricing", 400);
             }
             res.status(200).json("success");
         }
     });
 
-    app.get("/test", async function(req, res) {
-        console.log("/test");
-        // var airbnbListingID = "871044";
-        // if(!req.user) {
-        //     handleError(res, "User not logged in", "User not logged in", 403);
-        // } else {
-        //     for(var k = 0; k < req.user.accounts.length; k++) {
-        //         var account = req.user.accounts[k];
-        //         var airbnbThreadID = 334397422; // Thread ID Ranie
-        //         var airbnbReviewID = 149970088; // Review ID Ranie
-        //         //var data = await getMessages(account);
-        //         try {
-        //             //var data = await getThread(account, airbnbThreadID);//334397422); // Use this to get review ID using the threadID
-        //             //var data = await getReview(account, airbnbReviewID); // Use this to view the review.  Check review.as_submitted true/false
-        //             //var data = await putReview(account, airbnbReviewID, "Raina was a great guest.  Would be happy to host her again anytime."); // leave review
-        //             var data = await dashBoardAlerts(account);
-
-        //         } catch (error) {
-        //             handleError(res, error.message, "/test dashBoardAlerts()");
-        //         }
-
-
-        //     }
-        //     res.status(200).json(data);
-        // }
-        try {
-
-
-            var users = await Account.find({});
-            console.log("users", users);
-            res.status(200).json(users);
-            // // var accounts = await Account.findOneAndUpdate(
-            // //     {"username" : "tkrones@gmail.com"},
-            // //     {$set: {"password" : "asdfasdfasdf"}},
-            // //     {new : true}
-            // // );
-
-
-            // // // var accounts = await Account.findOne()
-            // // // .where("username").in(["tkrones@gmail.com"])
-            // // // .exec();
-            // // // accounts.password = 'asdf';
-            // // // accounts.save();
-            // // res.status(200).json(accounts);
-            // var airbnbListingID = "1234";
-            // var accountIDs = [];
-            // req.user.accounts.forEach(function(account) {
-            //     accountIDs.push(account._id);
-            // });
-            // // var listings = await Listing.find()
-            // // .where("accountID").in(accountIDs)
-            // // .exec();
-
-            // var listings = await Listing.findOneAndUpdate(
-            //     {
-            //         accountID: {$in: accountIDs},
-            //         airbnbListingID: airbnbListingID
-            //     },
-            //     {$set: {"pricingEnabled" : true}},
-            //     {new : true}
-            // );
-            // res.status(200).json(listings);
-
-
-            // // var listing = new Listing({
-            // //     accountID: req.user.accounts[0]._id,
-            // //     airbnbListingID: airbnbListingID
-            // // });
-            // // listing.save();
-            // // res.status(200).json(listing);
-        } catch (error) {
-            handleError(res, error.message, "/test dashBoardAlerts()");
+    app.post('/reorderPricing', async function(req, res){
+        console.log("/reorderPricing");
+        if(!req.user) {
+            handleError(res, "User not logged in", "User not logged in", 403);
+        } else {
+            var pricingOrder = req.body.pricingOrder;
+            var airbnbListingID = req.body.airbnbListingID;
+            try {
+                var accounts = await Account.find({userID: req.user._id});
+                var accountIDs = [];
+                accounts.forEach(function(account) {
+                    accountIDs.push(account._id);
+                });
+                // Make sure the user owns the listing
+                var listing = await Listing.findOne({
+                    accountID: {$in: accountIDs},
+                    airbnbListingID
+                });
+                var priceRules = await PriceRule.find({listingID: listing._id});
+                for(var i = 0; i < priceRules.length; i++) {
+                    var rule = priceRules[i];
+                    var order;
+                    for(var orderIndex = 0; orderIndex < pricingOrder.length; orderIndex++) {
+                        var orderedPrice = pricingOrder[orderIndex];
+                        if(rule._id == orderedPrice) {
+                            order = orderIndex;
+                            break;
+                        }
+                    }
+                    await PriceRule.findOneAndUpdate(
+                        {_id: rule._id},
+                        {order}
+                    );
+                }
+            } catch(error) {
+                console.log(error);
+                handleError(res, error.message, "/reorderPricing", 400);
+            }
+            res.status(200).json("success");
         }
     });
 

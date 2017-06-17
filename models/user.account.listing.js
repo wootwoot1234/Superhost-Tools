@@ -2,7 +2,7 @@ var mongoose = require('mongoose'),
     Schema = mongoose.Schema;
 
 var Listing = new Schema({
-    accountID: {type: mongoose.Schema.Types.ObjectId, ref: 'account'},
+    accountID: {type: mongoose.Schema.Types.ObjectId, ref: 'account', required: true},
     airbnbName: String,
     airbnbCheckInTime: Number,
     airbnbCheckOutTime: Number,
