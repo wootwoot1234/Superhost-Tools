@@ -306,9 +306,13 @@ module.exports = function(app) {
                 accounts.forEach(function(account) {
                     accountIDs.push(account._id);
                 });
+                var listing = await Listing.findOne({
+                    accountID: {$in: accountIDs},
+                    airbnbListingID,
+                });
                 await Message.findOneAndUpdate(
                     {
-                        accountID: {$in : accountIDs},
+                        listingID: listing._id,
                         messageRuleID,
                         airbnbConfirmationCode,
                     },
@@ -1108,7 +1112,7 @@ module.exports = function(app) {
                 locale: "en-US",
                 currency: "USD"
             };
-            if(false) {//process.env.NODE_ENV == "production") {
+            if(process.env.NODE_ENV == "production") {
                 try {
                     var data = await performAirbnbRequest(account, endpoint, method, headers, body, URLParams);
                     resolve(data);
@@ -1948,7 +1952,7 @@ module.exports = function(app) {
                 _format: "as_author",
             };
 
-            if(false) {//process.env.NODE_ENV == "production") {
+            if(process.env.NODE_ENV == "production") {
                 try {
                     var data = await performAirbnbRequest(account, endpoint, method, headers, body, URLParams);
                     console.log("putReview() data", data);
