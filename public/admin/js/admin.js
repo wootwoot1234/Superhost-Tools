@@ -100,7 +100,7 @@ angular.module("adminApp", ['ngRoute', 'mgcrea.ngStrap', 'mwl.calendar', 'angula
                 });
         };
     })
-    .controller("MainController", function($scope, $modal, $http, $route) {
+    .controller("MainController", function($scope, $modal, $http, $route, TextInsert) {
         console.log("MainController");
 
         // CHECK THIS
@@ -236,6 +236,10 @@ angular.module("adminApp", ['ngRoute', 'mgcrea.ngStrap', 'mwl.calendar', 'angula
                 });
             }
         };
+
+        $scope.textInsert = function(id, text) {
+            TextInsert.insert(angular.element('#' + id)[0], text);
+        };
     })
     .controller("DashboardController", function($scope, $modal, $http, $route, accounts, messages, Data, $location) {
         console.log("DashboardController");
@@ -367,8 +371,99 @@ angular.module("adminApp", ['ngRoute', 'mgcrea.ngStrap', 'mwl.calendar', 'angula
                 });
             }
         };
+
+        var customizeMessageModal = $modal({
+            scope: $scope,
+            templateUrl: 'pages/customizeMessageModal.html',
+            show: false,
+            backdrop: 'static',
+            keyboard: false
+        });
+
+        $scope.showCustomizeMessage = function(message) {
+            console.log("showCustomizeMessage()");
+            $scope.customizeMessage = {
+                message: message.message,
+                messageRuleID: message.messageRuleID,
+                airbnbListingID: message.airbnbListingID,
+                airbnbConfirmationCode: message.airbnbConfirmationCode,
+            };
+            customizeMessageModal.$promise.then(customizeMessageModal.show);
+        };
+        $scope.hideCustomizeMessage = function() {
+            console.log("hideCustomizeMessage()");
+            customizeMessageModal.$promise.then(customizeMessageModal.hide);
+        };
+        $scope.submitCustomizeMessageForm = function(isValid) {
+            console.log("submitCustomizeMessageForm()");
+            // check to make sure the form is completely valid
+            if (isValid) {
+                // Posting data to server
+                $http.post('../customizeMessage', $scope.customizeMessage)
+                .success(function(data) {
+                    if (data.errors) {
+                        console.log(data.errors);
+                        $location.path('/admin/#/');
+                    } else if(data == "success") {
+                        $scope.hideCustomizeMessage();
+                        $route.reload();
+                    }
+                })
+                .error(function (error) {
+                    console.log(error);
+                    if(error.error.error_code == 403) {
+                        $location.path('/admin/#/');
+                    }
+                });
+            }
+        };
+
+        var customizeReviewModal = $modal({
+            scope: $scope,
+            templateUrl: 'pages/customizeReviewModal.html',
+            show: false,
+            backdrop: 'static',
+            keyboard: false
+        });
+        $scope.showCustomizeReview = function(message) {
+            console.log("showCustomizeReview()");
+            $scope.customizeReview = {
+                review: message.reviewMessage,
+                messageRuleID: message.messageRuleID,
+                airbnbListingID: message.airbnbListingID,
+                airbnbConfirmationCode: message.airbnbConfirmationCode,
+            };
+            customizeReviewModal.$promise.then(customizeReviewModal.show);
+        };
+        $scope.hideCustomizeReview = function() {
+            console.log("hideCustomizeReview()");
+            customizeReviewModal.$promise.then(customizeReviewModal.hide);
+        };
+        $scope.submitCustomizeReviewForm = function(isValid) {
+            console.log("submitCustomizeReviewForm()");
+            // check to make sure the form is completely valid
+            if (isValid) {
+                // Posting data to server
+                $http.post('../customizeReview', $scope.customizeReview)
+                .success(function(data) {
+                    if (data.errors) {
+                        console.log(data.errors);
+                        $location.path('/admin/#/');
+                    } else if(data == "success") {
+                        $scope.hideCustomizeReview();
+                        $route.reload();
+                    }
+                })
+                .error(function (error) {
+                    console.log(error);
+                    if(error.error.error_code == 403) {
+                        $location.path('/admin/#/');
+                    }
+                });
+            }
+        };
     })
-    .controller("MessageRulesController", function($scope, $routeParams, $location, $window, accounts, TextInsert, $http, $route, $modal, $route) {
+    .controller("MessageRulesController", function($scope, $routeParams, $location, $window, accounts, $http, $route, $modal, $route) {
         console.log("MessageRulesController");
         var airbnbListingID = $routeParams.airbnbListingID;
         if(!airbnbListingID || !accounts) {
@@ -819,9 +914,6 @@ angular.module("adminApp", ['ngRoute', 'mgcrea.ngStrap', 'mwl.calendar', 'angula
                 });
             }
         };
-        $scope.textInsert = function(id, text) {
-            TextInsert.insert(angular.element('#' + id)[0], text);
-        };
 
         var confirmModal = $modal({
             scope: $scope,
@@ -1144,7 +1236,7 @@ angular.module("adminApp", ['ngRoute', 'mgcrea.ngStrap', 'mwl.calendar', 'angula
                     console.log(data.errors);
                     $location.path('/admin/#/');
                 } else if(data == "success") {
-                    $route.reload();
+                    $scope.syncing = true;
                 }
             })
             .error(function (error) {

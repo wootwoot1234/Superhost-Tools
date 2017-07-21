@@ -184,6 +184,11 @@ module.exports = function(app) {
                 );
                 await downloadAirbnbListings(req.user, account);
                 await getNewReservations(account, true);
+                var listings = await Listing.find({accountID : account._id});
+                for(var i = 0; i < listings.length; i++) {
+                    var listing = listings[i];
+                    await downloadSmartPricing(account, listing);
+                }
                 resolve();
             } catch (error) {
                 reject(error);
@@ -329,6 +334,82 @@ module.exports = function(app) {
         }
     });
 
+    app.post('/customizeMessage', async function(req, res){
+        console.log("/customizeMessage");
+        if(!req.user) {
+            handleError(res, "User not logged in", "User not logged in", 403);
+        } else {
+            var message = req.body.message;
+            var airbnbListingID = req.body.airbnbListingID;
+            var airbnbConfirmationCode = req.body.airbnbConfirmationCode;
+            var messageRuleID = req.body.messageRuleID;
+            try {
+                var accounts = await Account.find({userID: req.user._id});
+                var accountIDs = [];
+                accounts.forEach(function(account) {
+                    accountIDs.push(account._id);
+                });
+                var listing = await Listing.findOne({
+                    accountID: {$in: accountIDs},
+                    airbnbListingID,
+                });
+                await Message.findOneAndUpdate(
+                    {
+                        listingID: listing._id,
+                        messageRuleID,
+                        airbnbConfirmationCode,
+                    },
+                    {
+                        message,
+                    },
+                    {upsert:true}
+                );
+                res.status(200).json("success");
+            } catch(error) {
+                console.log(error);
+                handleError(res, error.message, "/customizeMessage", 400);
+            }
+        }
+    });
+
+    app.post('/customizeReview', async function(req, res){
+        console.log("/customizeReview");
+        if(!req.user) {
+            handleError(res, "User not logged in", "User not logged in", 403);
+        } else {
+            var review = req.body.review;
+            var airbnbListingID = req.body.airbnbListingID;
+            var airbnbConfirmationCode = req.body.airbnbConfirmationCode;
+            var messageRuleID = req.body.messageRuleID;
+            try {
+                var accounts = await Account.find({userID: req.user._id});
+                var accountIDs = [];
+                accounts.forEach(function(account) {
+                    accountIDs.push(account._id);
+                });
+                var listing = await Listing.findOne({
+                    accountID: {$in: accountIDs},
+                    airbnbListingID,
+                });
+                await Message.findOneAndUpdate(
+                    {
+                        listingID: listing._id,
+                        messageRuleID,
+                        airbnbConfirmationCode,
+                    },
+                    {
+                        review,
+                    },
+                    {upsert:true}
+                );
+                res.status(200).json("success");
+            } catch(error) {
+                console.log(error);
+                handleError(res, error.message, "/customizeReview", 400);
+            }
+        }
+    });
+
     //
     //
     // Airbnb actions
@@ -390,6 +471,12 @@ module.exports = function(app) {
                 var newReservations = [];
                 for(var k = 0; k < downloadedReservations.length; k++) {
                     var downloadedReservation = downloadedReservations[k];
+                    var isNewReservation = true;
+                    reservations.forEach(function(reservation) {
+                        if(downloadedReservation.confirmation_code == reservation.airbnbConfirmationCode) {
+                            isNewReservation = false;
+                        }
+                    });
                     var airbnbThreadID = downloadedReservation.thread_id;
                     var airbnbConfirmationCode = downloadedReservation.confirmation_code;
                     var airbnbListingID = downloadedReservation.listing.id;
@@ -398,35 +485,31 @@ module.exports = function(app) {
                     var airbnbFirstName = downloadedReservation.guest.first_name;
                     var airbnbStatus = downloadedReservation.status;
                     var airbnbThumbnailUrl = downloadedReservation.guest.thumbnail_url;
-                    var isNewReservation = true;
-                    reservations.forEach(function(reservation) {
-                        if(downloadedReservation.confirmation_code == reservation.airbnbConfirmationCode) {
-                            isNewReservation = false;
-                        }
-                    });
+                    var reservation = {
+                        accountID: account._id,
+                        airbnbThreadID,
+                        airbnbConfirmationCode,
+                        airbnbListingID,
+                        airbnbStartDate,
+                        airbnbNights,
+                        airbnbFirstName,
+                        airbnbStatus,
+                        airbnbThumbnailUrl,
+                    };
                     if(isNewReservation) {
-                        var newReservation = {
-                            accountID: account._id,
-                            airbnbThreadID,
-                            airbnbConfirmationCode,
-                            airbnbListingID,
-                            airbnbStartDate,
-                            airbnbNights,
-                            airbnbFirstName,
-                            airbnbStatus,
-                            airbnbThumbnailUrl,
-                        };
-                        if(addNewReservationsToDB) {
-                            await Reservation.findOneAndUpdate(
-                                {
-                                    accountID: account._id,
-                                    airbnbConfirmationCode,
-                                },
-                                newReservation,
-                                {upsert:true}
-                            );
-                        }
-                        newReservations.push(newReservation);
+                        newReservations.push(reservation);
+                        console.log("   FOUND NEW RESERVATION");
+                        console.log("       Reservation info - confirmation : " + airbnbConfirmationCode + " name: " + airbnbFirstName);
+                    }
+                    if(addNewReservationsToDB) {
+                        await Reservation.findOneAndUpdate(
+                            {
+                                accountID: account._id,
+                                airbnbConfirmationCode,
+                            },
+                            reservation,
+                            {upsert:true}
+                        );
                     }
                 }
                 resolve(newReservations);
@@ -439,7 +522,7 @@ module.exports = function(app) {
     //
     // Airbnb helper functions
     //
-    function performAirbnbRequest(account, endpoint, method, headers, body, URLParams) {
+    function performAirbnbRequest(account, endpoint, method, headers, body, URLParams, hasNewCredentials = false) {
         console.log("performAirbnbRequest() " + method + " " + endpoint);
         return new Promise(async function(resolve, reject) {
             var host = 'api.airbnb.com';
@@ -452,12 +535,10 @@ module.exports = function(app) {
                     reject(error);
                 }
             } else if(account.airbnbAccessToken) {
+                // This user HAS logged in to Airbnb successfully before
                 //console.log("HAS ACCESS_TOKEN");
-                try {
-                    var data = await performRequest(host, endpoint, method, headers, body, URLParams);
-                    resolve(data);
-                } catch(error) {
-                    console.log("performAirbnbRequest() ACCESS_TOKEN DIDN'T WORK");
+                if(!account.lastLoginAttemptSuccessful && hasNewCredentials) {
+                    console.log("performAirbnbRequest() LAST LOGIN FAILED BUT HAS NEW CREDENTIALS");
                     try {
                         var airbnbAccessToken = await loginAirbnb(account);
                         console.log("performAirbnbRequest() LOGIN SUCCESS");
@@ -469,16 +550,43 @@ module.exports = function(app) {
                         console.log("performAirbnbRequest() LOGIN FAILED");
                         reject(error);
                     }
+                } else if(!account.lastLoginAttemptSuccessful) {
+                    console.log("performAirbnbRequest() LAST LOGIN FAILED AND CREDENTIALS ARE THE SAME SO WILL NOT TRY TO LOGIN AGAIN");
+                    reject("Invalid email or password. Please update Airbnb credentials.");
+                } else {
+                    try {
+                        var data = await performRequest(host, endpoint, method, headers, body, URLParams);
+                        resolve(data);
+                    } catch(error) {
+                        console.log("performAirbnbRequest() ACCESS_TOKEN DIDN'T WORK");
+                        try {
+                            var airbnbAccessToken = await loginAirbnb(account);
+                            console.log("performAirbnbRequest() LOGIN SUCCESS");
+                            account.airbnbAccessToken = airbnbAccessToken;
+                            headers = {'X-Airbnb-OAuth-Token': airbnbAccessToken};
+                            var data = await performAirbnbRequest(account, endpoint, method, headers, body, URLParams);
+                            resolve(data);
+                        } catch (error) {
+                            console.log("performAirbnbRequest() LOGIN FAILED");
+                            reject(error);
+                        }
+                    }
                 }
             } else {
+                // This user has never logged in to Airbnb successfully
                 console.log("performAirbnbRequest() DOES NOT HAVE ACCESS_TOKEN");
                 try {
-                    var airbnbAccessToken = await loginAirbnb(account);
-                    console.log("performAirbnbRequest() LOGIN SUCCESS");
-                    account.airbnbAccessToken = airbnbAccessToken;
-                    headers = {'X-Airbnb-OAuth-Token': airbnbAccessToken};
-                    var data = await performAirbnbRequest(account, endpoint, method, headers, body, URLParams);
-                    resolve(data);
+                    if(hasNewCredentials) {
+                        var airbnbAccessToken = await loginAirbnb(account);
+                        console.log("performAirbnbRequest() LOGIN SUCCESS");
+                        account.airbnbAccessToken = airbnbAccessToken;
+                        headers = {'X-Airbnb-OAuth-Token': airbnbAccessToken};
+                        var data = await performAirbnbRequest(account, endpoint, method, headers, body, URLParams);
+                        resolve(data);
+                    } else {
+                        console.log("performAirbnbRequest() HAS NEVER LOGGED IN SUCCESSFULLY, NEEDS NEW CREDENTIALS");
+                        reject("Invalid email or password. Please update Airbnb credentials.");
+                    }
                 } catch (error) {
                     console.log("performAirbnbRequest() LOGIN FAILED");
                     reject(error);
@@ -512,7 +620,7 @@ module.exports = function(app) {
                 });
                 res.on('end', function() {
                     var data = JSON.parse(responseString);
-                    if(data.error) {
+                    if(data.error && data.error != 'unknown_error') {
                         console.log("ERROR: ", data);
                         reject(data);
                     } else {
@@ -557,24 +665,16 @@ module.exports = function(app) {
                 var data = await performRequest(host, endpoint, method, headers, body, URLParams);
                 if(data.access_token) {
                     console.log("LOGGED INTO AIRBNB, ACCESS_TOKEN: ", data.access_token);
-                    try {
-                        await Account.findByIdAndUpdate(account._id,
-                            {
-                                airbnbAccessToken: data.access_token,
-                                lastLoginAttemptSuccessful: true,
-                            }
-                        );
-                        resolve(data.access_token);
-                    } catch(error) {
-                        reject(error);
-                    }
+                    await Account.findByIdAndUpdate(account._id,
+                        {
+                            airbnbAccessToken: data.access_token,
+                            lastLoginAttemptSuccessful: true,
+                        }
+                    );
+                    resolve(data.access_token);
                 } else {
+                    // Looks like the login didn't work
                     console.log("FAILED TO LOG INTO AIRBNB: ", data);
-                    reject();
-                }
-            } catch (error) {
-                // Looks like the login didn't work
-                try {
                     await Account.findByIdAndUpdate(account._id,
                         {
                             lastLoginAttemptSuccessful: false,
@@ -585,10 +685,10 @@ module.exports = function(app) {
                         var user = await User.findById(account.userID);
                         sendEmail(user.username, "Airbnb Login Failed", "There was a problem logging into your Airbnb account.  Please update your credentials as soon as possible to avoid any interruptions in your service.\n\nError:\n" + JSON.stringify(error));
                     }
-                    reject(error);
-                } catch(error) {
-                    reject(error);
+                    reject(new Error(data.error_message));
                 }
+            } catch (error) {
+                reject(error);
             }
         });
     }
@@ -610,7 +710,7 @@ module.exports = function(app) {
                 alert_types: "reservation_request",
             };
             try {
-                var data = await performAirbnbRequest(account, endpoint, method, headers, body, URLParams);
+                var data = await performAirbnbRequest(account, endpoint, method, headers, body, URLParams, true);
                 resolve(data);
             } catch (error) {
                 reject(error);
@@ -651,12 +751,16 @@ module.exports = function(app) {
             var accounts = await Account.find({});
             for(var k = 0; k < accounts.length; k++) {
                 var account = accounts[k];
-                var newReservations = await getNewReservations(account, true);
-                var listings = await Listing.find({accountID : account._id});
-                for(var i = 0; i < listings.length; i++) {
-                    var listing = listings[i];
-                    await checkBookingBasedRulesForListing(account, listing, newReservations);
-                    await checkTimeBasedRulesForListing(account, listing);
+                try {
+                    var newReservations = await getNewReservations(account, true);
+                    var listings = await Listing.find({accountID : account._id});
+                    for(var i = 0; i < listings.length; i++) {
+                        var listing = listings[i];
+                        await checkBookingBasedRulesForListing(account, listing, newReservations);
+                        await checkTimeBasedRulesForListing(account, listing);
+                    }
+                } catch(error) {
+                    console.log("/checkRules IGNORE ERROR (PROBABLY LOGIN ERROR)");
                 }
             }
             console.log("Done checking rules");
@@ -679,7 +783,6 @@ module.exports = function(app) {
                     listingID: listing._id,
                     time: nowTime
                 });
-                //messageRules = JSON.parse(JSON.stringify(messageRules));
                 messageRules.forEach(function(messageRule, messageRuleIndex, messageRulesArray){
                     // save the back calculated checkin or check out.
                     // the backCalculatedCheckin/backCalculatedCheckout are calculated using todays date so if they
@@ -705,12 +808,13 @@ module.exports = function(app) {
                         if(daysTillCheckout <= 7) {
                             var airbnbConfirmationCode = reservation.airbnbConfirmationCode;
                             var airbnbThreadID = reservation.airbnbThreadID;
+                            var airbnbFirstName = reservation.airbnbFirstName;
                             var checkout = moment(reservation.airbnbStartDate, 'YYYY-MM-DD').add(reservation.airbnbNights, "day").format('YYYY-MM-DD');
                             for(var i = 0; i < messageRules.length; i++) {
                                 var messageRule = messageRules[i];
                                 console.log("       Checking Message Rule - title: " + messageRule.title);
                                 console.log("           event: " + messageRule.event + " days: " + messageRule.days + " time: " + messageRule.time + " minNights: " + messageRule.minNights);
-                                console.log("       Reservation info - confirmation : " + airbnbConfirmationCode + " name: " + reservation.airbnbFirstName);
+                                console.log("       Reservation info - confirmation : " + airbnbConfirmationCode + " name: " + airbnbFirstName);
                                 console.log("           start_date : " + reservation.airbnbStartDate + " nights: " + reservation.airbnbNights);
                                 if(messageRule.event == "checkin") {
                                     console.log("       The back calculated check-in is: " + messageRule.backCalculatedCheckin + " reservation check-in: " + reservation.airbnbStartDate + " reservation nights: " + reservation.airbnbNights);
@@ -724,9 +828,19 @@ module.exports = function(app) {
                                 } else if (messageRule.event == "checkout" && messageRule.backCalculatedCheckout == checkout && messageRule.minNights <= reservation.airbnbNights) {
                                     console.log("       Check-out rule criteria met");
                                     if(messageRule.reviewEnabled) {
-                                        await leaveReview(account, airbnbListingID, messageRule, airbnbConfirmationCode, airbnbThreadID);
-                                        if(messageRule.sendMessageAfterLeavingReview) {
-                                            await buildMessage(account, airbnbListingID, messageRule, airbnbConfirmationCode, isLastMinuteMessage);
+                                        var successfullyLeftReview = await leaveReview(account, airbnbListingID, messageRule, airbnbConfirmationCode, airbnbThreadID);
+                                        if(successfullyLeftReview) {
+                                            if(messageRule.sendMessageAfterLeavingReview) {
+                                                await buildMessage(account, airbnbListingID, messageRule, airbnbConfirmationCode, isLastMinuteMessage);
+                                            }
+                                        } else {
+                                            var listingName = listing.airbnbName;
+                                            if(listing.nickname) {
+                                                listingName = listing.nickname;
+                                            }
+                                            var user = await User.findById(account.userID);
+                                            var message = "Superhost Tools could not leave a review for " + airbnbFirstName + ".  This is probably because Airbnb is not allowing reviews for this guest yet.  Superhost Tools will try to leave a review a few times over an hour span, you will get this same message each time it fails.  If after an hour Airbnb is still not accepting reviews for this guest, Superhost Tools will stop trying.  It is recommended that you move this rule's time to later in the day to avoid any issues with leaving reviews.";
+                                            sendMessageEmail(user.username, "Review failed for " + airbnbFirstName + " @ " + listingName, message, airbnbConfirmationCode);
                                         }
                                     } else {
                                         await buildMessage(account, airbnbListingID, messageRule, airbnbConfirmationCode, isLastMinuteMessage);
@@ -812,19 +926,19 @@ module.exports = function(app) {
                     accountID: account._id,
                     airbnbListingID,
                 });
-                var reviewAlreadySentOrIsDisabled = false;
-                var messages = await Message.find({
+                var successfullyLeftReview = false;
+                var sentOrDisabledReview = await Message.findOne({
                     listingID: listing._id,
                     messageRuleID: messageRule._id,
                     airbnbConfirmationCode,
+                    $or: [
+                        {disable: true},
+                        {sentDate: {$exists: true}}
+                    ]
                 });
-                messages.forEach(function(message) {
-                    if((message.sentDate && message.review) || message.disable) {
-                        reviewAlreadySentOrIsDisabled = true;
-                    }
-                });
-                if(reviewAlreadySentOrIsDisabled) {
+                if(sentOrDisabledReview) {
                     console.log("    leaveReview() REVIEW ALREADY SENT OR IS DISABLED");
+                    successfullyLeftReview = true;
                 } else {
                     // Now we need to find the right thread to add the message to
                     // Get all the reservations then find the reservation that matched the confirmation_code and reply to it with the check in message
@@ -860,42 +974,55 @@ module.exports = function(app) {
                         }
                         var checkinDate = moment(reservation.airbnbStartDate, 'YYYY-MM-DD').format(checkInDateFormat);
                         var checkoutDate = moment(reservation.airbnbStartDate, 'YYYY-MM-DD').add(reservation.airbnbNights, "day").format(checkOutDateFormat);
-
-                        var reviewMessage = messageRule.reviewMessage;
+                        var reviewMessage;
+                        var customReview = await Message.findOne({
+                            listingID: listing._id,
+                            messageRuleID: messageRule._id,
+                            airbnbConfirmationCode,
+                            review: {$exists: true}
+                        });
+                        if(customReview) {
+                            reviewMessage = customReview.review;
+                        } else {
+                            reviewMessage = messageRule.reviewMessage;
+                        }
                         reviewMessage = reviewMessage.replace(/{{Guest Name}}/g, airbnbFirstName);
                         reviewMessage = reviewMessage.replace(/{{Check-In Date}}/g, checkinDate);
                         reviewMessage = reviewMessage.replace(/{{Check-In Time}}/g, airbnbCheckInTime);
                         reviewMessage = reviewMessage.replace(/{{Check-Out Date}}/g, checkoutDate);
                         reviewMessage = reviewMessage.replace(/{{Check-Out Time}}/g, airbnbCheckOutTime);
                         var thread = await getThread(account, airbnbThreadID);
-                        await putReview(account, thread.review_id, reviewMessage);
-                        console.log("GUEST WAS REVIEWED!, LISTING ID: " + listing.airbnbListingID);
-                        await Message.findOneAndUpdate(
-                            {
-                                messageRuleID: messageRule._id,
-                                airbnbConfirmationCode,
-                            },
-                            {
-                                listingID: listing._id,
-                                messageRuleID: messageRule._id,
-                                airbnbConfirmationCode,
-                                review: reviewMessage,
-                                sentEvent: messageRule.event,
-                                sentDate: moment().toDate(),
-                                sentDateFormated: moment().tz(listing.airbnbTimeZone).format('ddd, MMMM Do'),
-                                sentTimeFormated: moment().tz(listing.airbnbTimeZone).format("hA"),
-                            },
-                            {upsert: true}
-                        );
-                        var listingName = listing.airbnbName;
-                        if(listing.nickname) {
-                            listingName = listing.nickname;
+                        var reviewResult = await putReview(account, thread.review_id, reviewMessage);
+                        if(reviewResult && !reviewResult.error_code) {
+                            successfullyLeftReview = true;
+                            console.log("GUEST WAS REVIEWED!, LISTING ID: " + listing.airbnbListingID);
+                            await Message.findOneAndUpdate(
+                                {
+                                    messageRuleID: messageRule._id,
+                                    airbnbConfirmationCode,
+                                },
+                                {
+                                    listingID: listing._id,
+                                    messageRuleID: messageRule._id,
+                                    airbnbConfirmationCode,
+                                    review: reviewMessage,
+                                    sentEvent: messageRule.event,
+                                    sentDate: moment().toDate(),
+                                    sentDateFormated: moment().tz(listing.airbnbTimeZone).format('ddd, MMMM Do'),
+                                    sentTimeFormated: moment().tz(listing.airbnbTimeZone).format("hA"),
+                                },
+                                {upsert: true}
+                            );
+                            var listingName = listing.airbnbName;
+                            if(listing.nickname) {
+                                listingName = listing.nickname;
+                            }
+                            var user = await User.findById(account.userID);
+                            sendMessageEmail(user.username, "5 Start Review for " + airbnbFirstName + " @ " + listingName, reviewMessage, airbnbConfirmationCode);
                         }
-                        var user = await User.findById(account.userID);
-                        sendMessageEmail(user.username, "5 Start Review for " + airbnbFirstName + " @ " + listingName, reviewMessage, airbnbConfirmationCode);
                     }
                 }
-                resolve();
+                resolve(successfullyLeftReview);
             } catch(error) {
                 reject(error);
             }
@@ -913,18 +1040,16 @@ module.exports = function(app) {
                     accountID: account._id,
                     airbnbListingID,
                 });
-                var messages = await Message.find({
+                var sentOrDisabledMessage = await Message.findOne({
                     listingID: listing._id,
                     messageRuleID: messageRule._id,
                     airbnbConfirmationCode,
+                    $or: [
+                        {disable: true},
+                        {sentDate: {$exists: true}}
+                    ]
                 });
-                var messageAlreadySentOrIsDisabled = false;
-                messages.forEach(function(message) {
-                    if((message.sentDate && message.message) || message.disable) {
-                        messageAlreadySentOrIsDisabled = true;
-                    }
-                });
-                if(messageAlreadySentOrIsDisabled) {
+                if(sentOrDisabledMessage) {
                     console.log("    buildMessage() MESSAGE ALREADY SENT OR IS DISABLED");
                 } else {
                     // Now we need to find the right thread to add the message to
@@ -961,10 +1086,20 @@ module.exports = function(app) {
                         }
                         var checkinDate = moment(reservation.airbnbStartDate, 'YYYY-MM-DD').format(checkInDateFormat);
                         var checkoutDate = moment(reservation.airbnbStartDate, 'YYYY-MM-DD').add(reservation.airbnbNights, "day").format(checkOutDateFormat);
-
-                        var messageText = messageRule.message;
-                        if(isLastMinuteMessage) {
-                            var messageText = messageRule.lastMinuteMessage;
+                        var messageText;
+                        var customMessage = await Message.findOne({
+                            listingID: listing._id,
+                            messageRuleID: messageRule._id,
+                            airbnbConfirmationCode,
+                            message: {$exists: true}
+                        });
+                        if(customMessage) {
+                            messageText = customMessage.message;
+                        } else {
+                            messageText = messageRule.message;
+                            if(isLastMinuteMessage) {
+                                var messageText = messageRule.lastMinuteMessage;
+                            }
                         }
                         messageText = messageText.replace(/{{Guest Name}}/g, airbnbFirstName);
                         messageText = messageText.replace(/{{Check-In Date}}/g, checkinDate);
@@ -1172,17 +1307,14 @@ module.exports = function(app) {
                         var messageRules = await MessageRule.find({listingID: listing._id});
                         for(var i = 0; i < messageRules.length; i++) {
                             var messageRule = messageRules[i];
-                            var messageFromRuleAlreadyExists = false;
-                            //var messages = listingByAirbnbistingID[reservation.airbnbListingID].messages;
                             var messages = await Message.find({
                                 listingID: listing._id,
                                 messageRuleID: messageRule._id,
                                 airbnbConfirmationCode: reservation.airbnbConfirmationCode,
                             });
                             // Lets see if this a message for this rule and this reservation has been sent, if not we'll add a future message
-                            for(var j = 0; messages.length > j; j++) {
-                                var pastMessage = JSON.parse(JSON.stringify(messages[j]));
-                                messageFromRuleAlreadyExists = true;
+                            if(messages.length && messages[0].sentDate) {
+                                var pastMessage = JSON.parse(JSON.stringify(messages[0]));
                                 var eventDate = moment.tz(reservation.airbnbStartDate + " " + messageRule.time, 'YYYY-MM-DD H', listing.airbnbTimeZone);
                                 if (messageRule.event == "checkout") {
                                     eventDate = eventDate.add(reservation.airbnbNights, "day");
@@ -1200,6 +1332,7 @@ module.exports = function(app) {
                                 pastMessage.hasMatchingMessageRule = true;
                                 pastMessage.messageRuleID = messageRule._id;
                                 pastMessage.messageRuleTitle = messageRule.title;
+                                pastMessage.airbnbListingID = listing.airbnbListingID;
                                 // check to make sure the past message is a real past message and not a disabled/re-enabled message.
                                 // if not a real past message set the reviewEnabled to the message rule value
                                 if(typeof pastMessage.reviewEnabled != "boolean") {
@@ -1232,9 +1365,7 @@ module.exports = function(app) {
                                 pastMessage.reservation = reservation;
                                 //pastMessage.listing = listing;
                                 reservationsPastMessages.push(pastMessage);
-                                break;
-                            }
-                            if(!messageFromRuleAlreadyExists) {
+                            } else {
                                 // Message for this rule has not been sent or disabled
                                 // Now we need to make sure this message rule applies to this reservation
                                 // if the reservation is a "booking" type then it won't show up in timeline because we don't know when someone would book
@@ -1258,8 +1389,14 @@ module.exports = function(app) {
                                     futureMessage.hasMatchingMessageRule = true;
                                     futureMessage.messageRuleID = messageRule._id;
                                     futureMessage.messageRuleTitle = messageRule.title;
+                                    futureMessage.message = messageRule.message;
                                     futureMessage.reviewEnabled = messageRule.reviewEnabled;
+                                    futureMessage.reviewMessage = messageRule.reviewMessage;
                                     futureMessage.airbnbConfirmationCode = reservation.airbnbConfirmationCode;
+                                    futureMessage.airbnbListingID = listing.airbnbListingID;
+                                    if(messages.length) {
+                                        futureMessage.disable = messages[0].disable;
+                                    }
                                     var airbnbFirstName = reservation.airbnbFirstName;
                                     var airbnbCheckInTime =  moment(listing.airbnbCheckInTime, ["H"]).format("hA");
                                     var airbnbCheckOutTime = moment(listing.airbnbCheckOutTime, ["H"]).format("hA");
@@ -1268,6 +1405,9 @@ module.exports = function(app) {
                                     // If review is enabled, check if there is also a message...
                                     if(!messageRule.reviewEnabled || (messageRule.reviewEnabled && messageRule.sendMessageAfterLeavingReview)) {
                                         var messageText = messageRule.message;
+                                        if(messages.length && messages[0].message) {
+                                            messageText = messages[0].message;
+                                        }
                                         messageText = messageText.replace(/{{Guest Name}}/g, airbnbFirstName);
                                         messageText = messageText.replace(/{{Check-In Date}}/g, checkinDate);
                                         messageText = messageText.replace(/{{Check-In Time}}/g, airbnbCheckInTime);
@@ -1277,6 +1417,9 @@ module.exports = function(app) {
                                     }
                                     if(messageRule.reviewEnabled) {
                                         var reviewMessage = messageRule.reviewMessage;
+                                        if(messages.length && messages[0].review) {
+                                            reviewMessage = messages[0].review;
+                                        }
                                         reviewMessage = reviewMessage.replace(/{{Guest Name}}/g, airbnbFirstName);
                                         reviewMessage = reviewMessage.replace(/{{Check-In Date}}/g, checkinDate);
                                         reviewMessage = reviewMessage.replace(/{{Check-In Time}}/g, airbnbCheckInTime);
@@ -1329,7 +1472,26 @@ module.exports = function(app) {
             console.log("sendEmail() error", error);
             console.log("sendEmail() responseStatus", responseStatus);
             //console.log("html", html);
-            // console.log("text", text);
+            console.log("sendEmail() text", text);
+        });
+    };
+
+    function sendMessageEmail(email, subject, messageText, airbnbConfirmationCode) {
+        console.log("sendMessageEmail()");
+        if(process.env.NODE_ENV != "production") {
+            subject = "DEV: " + subject;
+        }
+        var locals = {
+            email,
+            subject,
+            messageText,
+            airbnbConfirmationCode
+        };
+        mailer.sendOne('message', locals, function (error, responseStatus, html, text) {
+            console.log("sendMessageEmail() error", error);
+            console.log("sendMessageEmail() responseStatus", responseStatus);
+            //console.log("html", html);
+            //console.log("text", text);
         });
     };
 
@@ -1586,7 +1748,6 @@ module.exports = function(app) {
             var method = 'PUT';
             var headers = {'X-Airbnb-OAuth-Token': account.airbnbAccessToken};
             var body = {
-                availability: "available",
                 daily_price: price,
                 demand_based_pricing_overridden: true,
             };
@@ -1673,10 +1834,14 @@ module.exports = function(app) {
             for(var k = 0; k < accounts.length; k++) {
                 var account = accounts[k];
                 var listings = await Listing.find({accountID : account._id});
-                for(var i = 0; i < listings.length; i++) {
-                    var listing = listings[i];
-                    await downloadSmartPricing(account, listing);
-                    await updateListingPricing(account, listing);
+                try {
+                    for(var i = 0; i < listings.length; i++) {
+                        var listing = listings[i];
+                        await downloadSmartPricing(account, listing);
+                        await updateListingPricing(account, listing);
+                    }
+                } catch(error) {
+                    console.log("/updatePricing IGNORE ERROR (PROBABLY LOGIN ERROR)");
                 }
             }
         } catch (error) {
@@ -1691,6 +1856,7 @@ module.exports = function(app) {
         if(!req.user) {
             handleError(res, "User not logged in", "User not logged in", 403);
         } else {
+            res.status(200).json("success");
             try {
                 var accounts = await Account.find({userID: req.user._id});
                 var accountIDs = [];
@@ -1704,7 +1870,6 @@ module.exports = function(app) {
                 var account = await Account.findById(listing.accountID);
                 await downloadSmartPricing(account, listing);
                 await updateListingPricing(account, listing, 1);
-                res.status(200).json("success");
             } catch (error) {
                 console.log(error);
                 handleError(res, error.message, "/forceUpdatePricing");
@@ -1939,7 +2104,7 @@ module.exports = function(app) {
             var body = {
                 recommend: 1,
                 private_feedback: "",
-                comments: comments,//"Great guest. They left the apartment very clean. We would love to have them back anytime. ",
+                comments: comments,
                 cleanliness: 5,
                 rating: 5,
                 respect_house_rules: 5,
@@ -1958,6 +2123,7 @@ module.exports = function(app) {
                     console.log("putReview() data", data);
                     resolve(data);
                 } catch (error) {
+                    console.log("putReview() error", error);
                     reject(error);
                 }
             } else {

@@ -89,17 +89,19 @@
                         <small class="text-muted"><i class="fa fa-clock-o"></i> {{message.sentDateFormated ? message.sentDateFormated : message.sendDateFormated}} at {{message.sentTimeFormated ? message.sentTimeFormated : message.sendTimeFormated}}</small>
                     </div>
                     <div class="timeline-body">
-                        <pre ng-class="message.sentDate || message.sendDateHasPassed || message.disable ? 'text-muted' : ''">{{message.message ? message.message : message.sendMessage}}</pre>
+                        <pre ng-class="message.sentDate || message.sendDateHasPassed || message.disable ? 'text-muted' : ''">{{message.sendMessage ? message.sendMessage : message.message}}</pre>
                         <h5 ng-show="message.reviewEnabled">5 Star Review:</h4>
-                        <pre ng-show="message.reviewEnabled" ng-class="message.sentDate || message.sendDateHasPassed || message.disable ? 'text-muted' : ''">{{message.review ? message.review : message.sendReview}}</pre>
+                        <pre ng-show="message.reviewEnabled" ng-class="message.sentDate || message.sendDateHasPassed || message.disable ? 'text-muted' : ''">{{message.sendReview ? message.sendReview : message.review}}</pre>
                         <div class="btn-group btn-group-xs pull-right" role="group">
-                            <button type="button" class="btn btn-danger btn-outline" ng-hide="message.sentDate || message.sendDateHasPassed || message.disable" ng-click="disableMessage(message)"><i class="fa fa-ban fa-fw"></i> Don't Send</button>
+                            <button type="button" class="btn btn-danger btn-outline" ng-hide="message.sentDate || message.sendDateHasPassed || message.disable" ng-click="disableMessage(message)"><i class="fa fa-ban fa-fw"></i> Disable</button>
                             <button type="button" class="btn btn-danger" ng-disabled="message.sendDateHasPassed" ng-show="message.disable" ng-click="disableMessage(message)"><i class="fa fa-ban fa-fw"></i> Disabled</button>
                             <button type="button" class="btn btn-success btn-outline" ng-disabled="true" ng-show="message.sentDate"><i class="fa fa-check fa-fw"></i> Sent</button>
                             <button type="button" class="btn btn-default btn-outline" ng-disabled="true" ng-show="!message.sentDate && message.sendDateHasPassed"><i class="fa fa-times fa-fw"></i> Didn't Send</button>
                             <a type="button" class="btn btn-primary btn-outline" href="/admin/#/messageRules/{{message.reservation.airbnbListingID}}" ng-show="message.hasMatchingMessageRule"><i class="fa fa-pencil fa-fw"></i> Edit Rule</a>
                             <a type="button" class="btn btn-primary btn-outline" ng-hide="message.hasMatchingMessageRule" ng-disabled="true" bs-tooltip data-title="Rule no longer exists."><i class="fa fa-pencil fa-fw"></i> Edit Rule</a>
-                            <a type="button" class="btn btn-default btn-outline" target="_blank" href="https://www.airbnb.com/messaging/qt_for_reservation/{{message.reservation.airbnbConfirmationCode}}"><i class="fa fa-external-link fa-fw"></i> View</a>
+                            <button type="button" class="btn btn-success btn-outline" ng-hide="message.sentDate || message.sendDateHasPassed || message.disable" ng-click="showCustomizeMessage(message)"><i class="fa fa-pencil-square-o fa-fw"></i> Edit Message</button>
+                            <button type="button" class="btn btn-success btn-outline" ng-hide="message.sentDate || message.sendDateHasPassed || message.disable || !message.reviewEnabled" ng-click="showCustomizeReview(message)"><i class="fa fa-pencil-square-o fa-fw"></i> Edit Review</button>
+                            <a type="button" class="btn btn-default btn-outline" target="_blank" href="https://www.airbnb.com/messaging/qt_for_reservation/{{message.reservation.airbnbConfirmationCode}}"><i class="fa fa-external-link fa-fw"></i> Airbnb</a>
                         </div>
                     </div>
                 </div>

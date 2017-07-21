@@ -1,0 +1,39 @@
+<div class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form role="form" name="customizeReviewForm" ng-submit="submitCustomizeReviewForm(customizeReviewForm.$valid)" novalidate>
+                <div class="modal-header">
+                    <button type="button" class="close" aria-label="Close" ng-click="hideCustomizeReview()"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Customize Review</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-sm-8">
+                            <div class="form-group" ng-class="customizeReviewForm.$submitted && customizeReviewForm.review.$error.required ? 'has-error' : ''">
+                                <label>Review</label>
+                                <textarea class="form-control" rows="10" id="review" name="review" ng-model="customizeReview.review"></textarea>
+                                <div class="alert alert-danger help-block" ng-show="customizeReviewForm.$submitted && customizeReviewForm.review.$error.required">
+                                    You can't send a blank review.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label>Click To Insert Tags <i class="fa fa-question-circle text-muted" bs-tooltip data-title="Use tags to insert dynamic information such as the guests name into your message."></i></label>
+                                <button type="button" class="btn btn-outline btn-primary btn-xs btn-block" ng-click="textInsert('review','\{\{Guest Name\}\}')">Guest Name</button>
+                                <button type="button" class="btn btn-outline btn-primary btn-xs btn-block" ng-click="textInsert('review','\{\{Check-In Date\}\}')">Check-In Date</button>
+                                <button type="button" class="btn btn-outline btn-primary btn-xs btn-block" ng-click="textInsert('review','\{\{Check-In Time\}\}')">Check-In Time</button>
+                                <button type="button" class="btn btn-outline btn-primary btn-xs btn-block" ng-click="textInsert('review','\{\{Check-Out Date\}\}')">Check-Out Date</button>
+                                <button type="button" class="btn btn-outline btn-primary btn-xs btn-block" ng-click="textInsert('review','\{\{Check-Out Time\}\}')">Check-Out Time</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default btn-outline" ng-click="hideCustomizeReview()">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-outline">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -117,7 +117,7 @@
                         <div class="col-sm-8">
                             <div class="form-group" ng-class="newRuleForm.$submitted && newRuleForm.message.$error.required ? 'has-error' : ''">
                                 <label>Message</label>
-                                <textarea class="form-control" rows="10" id="message" name="message" ng-model="newRule.message" required></textarea>
+                                <textarea class="form-control" rows="10" id="customReview" name="customReview" ng-model="newRule.message" required></textarea>
                                 <div class="alert alert-danger help-block" ng-show="newRuleForm.$submitted && newRuleForm.message.$error.required">
                                     You forgot to add a message!
                                 </div>
@@ -126,18 +126,18 @@
                         <div class="col-sm-4">
                             <div class="form-group">
                                 <label>Click To Insert Tags <i class="fa fa-question-circle text-muted" bs-tooltip data-title="Use tags to insert dynamic information such as the guests name into your message."></i></label>
-                                <button type="button" class="btn btn-outline btn-primary btn-xs btn-block" ng-click="textInsert('message','\{\{Guest Name\}\}')">Guest Name</button>
-                                <button type="button" class="btn btn-outline btn-primary btn-xs btn-block" ng-click="textInsert('message','\{\{Check-In Date\}\}')">Check-In Date</button>
-                                <button type="button" class="btn btn-outline btn-primary btn-xs btn-block" ng-click="textInsert('message','\{\{Check-In Time\}\}')">Check-In Time</button>
-                                <button type="button" class="btn btn-outline btn-primary btn-xs btn-block" ng-click="textInsert('message','\{\{Check-Out Date\}\}')">Check-Out Date</button>
-                                <button type="button" class="btn btn-outline btn-primary btn-xs btn-block" ng-click="textInsert('message','\{\{Check-Out Time\}\}')">Check-Out Time</button>
+                                <button type="button" class="btn btn-outline btn-primary btn-xs btn-block" ng-click="textInsert('customReview','\{\{Guest Name\}\}')">Guest Name</button>
+                                <button type="button" class="btn btn-outline btn-primary btn-xs btn-block" ng-click="textInsert('customReview','\{\{Check-In Date\}\}')">Check-In Date</button>
+                                <button type="button" class="btn btn-outline btn-primary btn-xs btn-block" ng-click="textInsert('customReview','\{\{Check-In Time\}\}')">Check-In Time</button>
+                                <button type="button" class="btn btn-outline btn-primary btn-xs btn-block" ng-click="textInsert('customReview','\{\{Check-Out Date\}\}')">Check-Out Date</button>
+                                <button type="button" class="btn btn-outline btn-primary btn-xs btn-block" ng-click="textInsert('customReview','\{\{Check-Out Time\}\}')">Check-Out Time</button>
                             </div>
                         </div>
                     </div>
                     <div class="row" ng-show="!newRule.lastMinuteMessageIsTheSame && newRule.lastMinuteMessageEnabled">
                         <div class="col-sm-8">
                             <div class="form-group" ng-class="newRuleForm.$submitted && newRuleForm.lastMinuteMessage.$error.required ? 'has-error' : ''">
-                                <label>Last Minute Message <i class="fa fa-question-circle text-muted" bs-tooltip data-title="The 'Last Minute Message' will only be sent if a guest makes a booking after the time that message would have sent, in this case if a booking occurres after {{newRule.time.text | lowercase}} {{newRule.days.text | lowercase}} {{newRule.event.text | lowercase}}."></i></label>
+                                <label>Last Minute Message <i class="fa fa-question-circle text-muted" bs-tooltip data-title="The 'Last Minute Message' will only be sent if a guest makes a booking after the time that message would have been sent, in this case if a booking occurs after {{newRule.time.text | lowercase}} {{newRule.days.text | lowercase}} {{newRule.event.text | lowercase}}."></i></label>
                                 <textarea class="form-control" rows="10" id="lastMinuteMessage" name="lastMinuteMessage" ng-model="newRule.lastMinuteMessage" ng-required="!newRule.lastMinuteMessageIsTheSame && newRule.lastMinuteMessageEnabled"></textarea>
                                 <div class="alert alert-danger help-block" ng-show="newRuleForm.$submitted && newRuleForm.lastMinuteMessage.$error.required">
                                     You forgot to add a last minute message!

@@ -8,7 +8,7 @@
                 </div>
                 <div class="modal-body">
                     <p>Using your Airbnb credentials our messaging engine logs in on your behalf and automatically sends messages to your guests.  Don't worry, it will only send messages you tell it to send.</p>
-                    <div class="alert alert-danger help-block" ng-show="addAccountError">
+                    <div class="alert alert-danger help-block" ng-show="addAccountError && !addAccountProcessing">
                         {{addAccountError}}
                     </div>
                     <div class="row">
