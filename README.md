@@ -32,7 +32,7 @@ Note: the code is set to not send messages or change prices on Airbnb from a loc
 
 1. Install all the node dependencies, open terminal and browse to the projects root directory and type `npm install`
 2. In terminal change to the public directory, type `cd public/`
-3. Then install all the bower components, type 'bower install'.
+3. Then install all the bower components, type `bower install`.
 4. Open email/config.js and add your mailgun info.
 
 ## How to run on local computer
