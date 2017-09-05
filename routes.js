@@ -1621,6 +1621,8 @@ module.exports = function(app) {
             case "maxPrice":
                 if(rule.amount < adjustedPrice) {
                     newAdjustedPrice = parseInt(rule.amount);
+                } else {
+                    newAdjustedPrice = adjustedPrice;
                 }
                 equation = "\\(\\mathsf{\\$" + newAdjustedPrice + " = if\\ \\$" + rule.amount + " < \\$" + adjustedPrice + "\\ then\\ \\$" + rule.amount + "}\\)";
             break;
