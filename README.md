@@ -41,17 +41,7 @@ Note: the code is set to not send messages or change prices on Airbnb from a loc
 3. Open your browser and browse to 'http://localhost:1337/'
 
 ## To-do (pull requests welcome)
-- [x] Add Heroku deploy button.
-- [ ] Remove airbnb credentials from DB and just store the access-token
-- [ ] Allow users to manually send a scheduled message
-- [x] Allow users to modify messages individually
-- [ ] Clean up README
-- [ ] Add pricing engine user introduction walk though (similar to the messaging walk though).  New users are probably pretty confused how to use it.  Need a better explanation of how to use it for users that have just registered accounts.
-- [ ] Create tests for the code
-- [x] Re-factor DB code and DB structure.
-- [ ] Add config values to Heroku Config Vars
-- [x] Reorder pricing rules
-- [x] Add min and max pricing rules
+See the [Issues](https://github.com/wootwoot1234/Superhost-Tools/issues) page and feel free to request features or bug fixes.
 
 ## HELP WANTED
 I'm still currently working on fixing bugs and adding features to Superhost Tools and can use your help.  Send me pull requests and I'll respond ASAP.  :)  Thanks!
