@@ -1,5 +1,5 @@
 # Warning:
-I have completly re-written the code behind [SuperhostTools.com](https://SuperhostTools.com) and continue to maintain it and ad new features on a regular basis.  I recommend you sign up for an account there as this code no longer works because Airbnb has updated it's API.  I'm no longer maintain this code and this code no longer works.  If you would like to bring this back to life I would be happy to accept pull-requests.
+I have completly re-written the code behind [SuperhostTools.com](https://SuperhostTools.com) and continue to maintain it and add new features.  I recommend you sign up for an account there as this code no longer works because Airbnb has updated it's API.  I'm no longer maintain this code and this code no longer works.  If you would like to bring this back to life I would be happy to accept pull-requests.
 
 # Superhost-Tools
 **Open Source Airbnb Auto Messaging and Pricing Tool for Hosts**
