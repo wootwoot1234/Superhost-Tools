@@ -30,7 +30,7 @@
     "express": "~3.3.4",
     "mocha": "~1.14.0",
     "moment-timezone": "^0.5.11",
-    "mongoose": "^4.8.4",
+    "mongoose": "^5.7.8",
     "nodemailer": "^3.1.4",
     "nodemailer-mailgun-transport": "git+https://github.com/orliesaurus/nodemailer-mailgun-transport.git",
     "passport": "~0.1.17",
