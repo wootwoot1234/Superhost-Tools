@@ -37,7 +37,7 @@
     "passport-local": "~0.1.6",
     "passport-local-mongoose": "~0.2.5",
     "should": "~2.1.0",
-    "bower": "1.8.0"
+    "bower": "1.8.8"
   },
   "scripts": {
       "postinstall": "bower install",
